@@ -1,0 +1,16 @@
+[
+  {
+    "id_pedido": 10,
+    "cliente": "Cliente Archivo 1",
+    "tipo": "Local",
+    "cant_productos": 3,
+    "estado": "Solicitado"
+  },
+  {
+    "id_pedido": 11,
+    "cliente": "Cliente Archivo 2",
+    "tipo": "Domicilio",
+    "cant_productos": 1,
+    "estado": "Entregado"
+  }
+]

@@ -5,6 +5,7 @@ const LABELS: Record<LogOperaciones["tipo"], string> = {
   cliente_agregado: "Cliente agregado a la fila",
   cliente_atendido: "Cliente atendido",
   ruta_calculada: "Ruta calculada",
+  busqueda_pedido: "Búsqueda Big O",
 };
 
 export function PilaDeOperaciones({ stack, refreshTick }: PropsPilas) {

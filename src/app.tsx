@@ -7,6 +7,7 @@ import { LogOperaciones, Vista } from "./types/operaciones.types";
 import { ColaDeClientes } from "./components/colaCliente.component";
 import { PilaDeOperaciones } from "./components/operaciones.component";
 import { PlaneadorDeRutas } from "./components/rutas.component";
+import { BusquedaDePedidos } from "./components/busquedaPedidos.component";
 
 function now(): string {
   return new Date().toLocaleTimeString("es-CO", { hour12: false });
@@ -55,11 +56,16 @@ export default function App() {
           <button className={`nav-item ${view === "rutas" ? "active" : ""}`} onClick={() => setView("rutas")}>
             Rutas &amp; entregas
           </button>
+          <button
+            className={`nav-item ${view === "busqueda" ? "active" : ""}`}
+            onClick={() => setView("busqueda")}
+          >
+            Búsqueda de pedidos
+          </button>
         </nav>
 
         <p className="sidebar-foot">
-          Pilas, colas y grafos (Dijkstra) trabajando juntos para atender clientes y planificar
-          entregas.
+          Pilas, colas, grafos (Dijkstra) y análisis computacional Big O para optimizar el servicio del restaurante.
         </p>
       </aside>
 
@@ -76,6 +82,7 @@ export default function App() {
         )}
         {view === "operaciones" && <PilaDeOperaciones stack={stackRef.current} refreshTick={tick} />}
         {view === "rutas" && <PlaneadorDeRutas graph={graphRef.current} onLog={log} />}
+        {view === "busqueda" && <BusquedaDePedidos onLog={log} />}
       </main>
     </div>
   );

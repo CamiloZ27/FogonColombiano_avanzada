@@ -2,9 +2,15 @@ import { Cola } from "../structures/cola.structure";
 import { Pila } from "../structures/pila.structure";
 import { Cliente } from "./clientes.types";
 
-export type TipoOperacion = "cliente_agregado" | "cliente_atendido" | "ruta_calculada";
+import { Pedido } from "./pedidos.types";
 
-export type Vista = "cola" | "operaciones" | "rutas";
+export type TipoOperacion =
+  | "cliente_agregado"
+  | "cliente_atendido"
+  | "ruta_calculada"
+  | "busqueda_pedido";
+
+export type Vista = "cola" | "operaciones" | "rutas" | "busqueda";
 
 export interface Edge {
   to: string;
@@ -37,4 +43,40 @@ export interface PropsColas {
 export interface PropsPilas {
   stack: Pila<LogOperaciones>;
   refreshTick: number;
+}
+
+export interface PasoTraza {
+  paso: number;
+  descripcion: string;
+  rango?: [number, number];
+  indiceEvaluado?: number;
+}
+
+export interface MetricaBusqueda {
+  nombre: string;
+  notacion: string;
+  operaciones: number;
+  tiempoMs: number;
+  encontrado: boolean;
+  complejidadTeorica: {
+    mejor: string;
+    promedio: string;
+    peor: string;
+    espacio: string;
+  };
+  explicacion: string;
+  trazas: PasoTraza[];
+}
+
+export interface ComparativaBigOResult {
+  idBuscado: number;
+  totalElementos: number;
+  pedido: Pedido | null;
+  metricaConstante: MetricaBusqueda;
+  metricaBinaria: MetricaBusqueda;
+  metricaLineal: MetricaBusqueda;
+}
+
+export interface PropsBusqueda {
+  onLog: (log: Omit<LogOperaciones, "id" | "hora">) => void;
 }

@@ -1,7 +1,6 @@
-import * as fs from 'fs';
-import * as path from 'path';
 import { sanitizarDataset } from '../utils/validator.util';
-import { pedidosManualesCrudos } from './datasetManual.data'
+import { pedidosManualesCrudos } from './datasetManual.data';
+import datasetFileJson from './datasetFile.data.json';
 import { ReporteValidacion } from '../types/validator.types';
 
 export function obtenerDatasetGenerado(cantidad: number): ReporteValidacion {
@@ -32,12 +31,9 @@ export function obtenerDatasetManual(): ReporteValidacion {
 
 export function obtenerDatasetArchivo(): ReporteValidacion {
   try {
-    const rutaArchivo = path.join(__dirname, 'datasetFile.data.json');
-    const archivoCrudo = fs.readFileSync(rutaArchivo, 'utf-8');
-    const rawData = JSON.parse(archivoCrudo);
-    return sanitizarDataset(rawData);
+    return sanitizarDataset(datasetFileJson);
   } catch (error) {
-    console.log(error)
+    console.error(error);
     return { total: 0, validos: [], invalidos: [] };
   }
 }

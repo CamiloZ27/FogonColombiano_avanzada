@@ -1,5 +1,5 @@
 import { FormEvent, useState } from "react";
-import { COMIDAS_TIPICAS, ComidaTipica } from "../datasets/datasetComidas.data";
+import { ComidaTipica } from "../datasets/datasetComidas.data";
 import { Cliente } from "../types/clientes.types";
 import { PropsColas } from "../types/operaciones.types";
 import { ModalCartaComidas } from "./modalCartaComidas.component";
@@ -10,8 +10,7 @@ function now(): string {
 
 export function ColaDeClientes({ queue, nextId, onNextIdChange, onLog, refreshTick, bumpTick }: PropsColas) {
   const [nombre, setNombre] = useState("");
-  // Plato seleccionado mediante el modal ilustrado
-  const [platoSeleccionado, setPlatoSeleccionado] = useState<ComidaTipica | null>(null);
+  const [platosSeleccionados, setPlatosSeleccionados] = useState<ComidaTipica[]>([]);
   const [ultimoAtendido, setUltimoAtendido] = useState<Cliente | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -19,19 +18,20 @@ export function ColaDeClientes({ queue, nextId, onNextIdChange, onLog, refreshTi
 
   function agregarCliente(e: FormEvent) {
     e.preventDefault();
-    if (!nombre.trim() || !platoSeleccionado) return;
+    if (!nombre.trim() || platosSeleccionados.length === 0) return;
 
     const client: Cliente = {
       id: nextId,
       nombre: nombre.trim(),
-      pedido: platoSeleccionado.nombre,
+      pedido: platosSeleccionados.map((plato) => plato.nombre),
       llegada: now(),
     };
 
     queue.enqueue(client);
-    onLog({ tipo: "cliente_agregado", detalle: `${client.nombre} — ${client.pedido}` });
+    onLog({ tipo: "cliente_agregado", detalle: `${client.nombre} — ${client.pedido.join(", ")}` });
     onNextIdChange(nextId + 1);
     setNombre("");
+    setPlatosSeleccionados([]);
     bumpTick();
   }
 
@@ -39,12 +39,16 @@ export function ColaDeClientes({ queue, nextId, onNextIdChange, onLog, refreshTi
     const atendido = queue.dequeue();
     if (!atendido) return;
     setUltimoAtendido(atendido);
-    onLog({ tipo: "cliente_atendido", detalle: `${atendido.nombre} — ${atendido.pedido}` });
+    onLog({ tipo: "cliente_atendido", detalle: `${atendido.nombre} — ${atendido.pedido.join(", ")}` });
     bumpTick();
   }
 
   function handleSelectFromModal(comida: ComidaTipica) {
-    setPlatoSeleccionado(comida);
+    setPlatosSeleccionados((platos) => [...platos, comida]);
+  }
+
+  function quitarPlato(indice: number) {
+    setPlatosSeleccionados((platos) => platos.filter((_, i) => i !== indice));
   }
 
   return (
@@ -75,55 +79,38 @@ export function ColaDeClientes({ queue, nextId, onNextIdChange, onLog, refreshTi
             style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
           >
             <span>🍽️</span>
-            <span>{platoSeleccionado ? "Cambiar Plato (Ver Carta)" : "Seleccionar Plato (Ver Carta)"}</span>
+            <span>{platosSeleccionados.length > 0 ? "Agregar otro plato" : "Seleccionar platos"}</span>
           </button>
 
           <button
             className="btn btn-accent"
             type="submit"
-            disabled={!nombre.trim() || !platoSeleccionado}
+            disabled={!nombre.trim() || platosSeleccionados.length === 0}
           >
             Agregar a la fila
           </button>
         </div>
 
-        {/* Tarjeta del plato seleccionado mediante el modal */}
-        {platoSeleccionado ? (
-          <div className="selected-dish-preview" onClick={() => setIsModalOpen(true)} style={{ cursor: "pointer" }}>
-            <div className="preview-img-container">
-              <img
-                src={platoSeleccionado.imagen}
-                alt={platoSeleccionado.nombre}
-                className="preview-mini-thumb"
-                referrerPolicy="no-referrer"
-                onError={(e) => {
-                  const img = e.currentTarget as HTMLImageElement;
-                  // 3-level fallback: imagen → imagenSecundaria → svgFallback
-                  if (!img.dataset.triedSecondary && platoSeleccionado.imagenSecundaria) {
-                    img.dataset.triedSecondary = "1";
-                    img.src = platoSeleccionado.imagenSecundaria;
-                  } else if (!img.dataset.triedSvg) {
-                    img.dataset.triedSvg = "1";
-                    img.src = platoSeleccionado.svgFallback;
-                  }
-                }}
-              />
-            </div>
+        {platosSeleccionados.length > 0 ? (
+          <div className="selected-dish-preview">
             <div className="preview-dish-details">
-              <span className="preview-dish-name">
-                {platoSeleccionado.nombre} —{" "}
-                <strong style={{ color: "var(--accent-soft)" }}>
-                  {platoSeleccionado.precio.toLocaleString("es-CO", {
-                    style: "currency",
-                    currency: "COP",
-                    maximumFractionDigits: 0,
-                  })}
-                </strong>
-              </span>
-              <span className="preview-dish-desc">{platoSeleccionado.descripcion}</span>
+              <span className="preview-dish-name">Platos de la orden ({platosSeleccionados.length})</span>
+              <div className="form-row">
+                {platosSeleccionados.map((plato, indice) => (
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    key={`${plato.id}-${indice}`}
+                    onClick={() => quitarPlato(indice)}
+                    title="Quitar plato"
+                  >
+                    {plato.nombre} ×
+                  </button>
+                ))}
+              </div>
             </div>
-            <span className="btn-dish-change-tag">
-              🔄 Cambiar en carta
+            <span className="btn-dish-change-tag" onClick={() => setIsModalOpen(true)}>
+              🍽️ Agregar otro
             </span>
           </div>
         ) : (
@@ -141,7 +128,7 @@ export function ColaDeClientes({ queue, nextId, onNextIdChange, onLog, refreshTi
         {ultimoAtendido && (
           <span style={{ color: "#C9AD8F", fontSize: "0.85rem", alignSelf: "center" }}>
             Último atendido: <strong style={{ color: "var(--accent-soft)" }}>{ultimoAtendido.nombre}</strong> (
-            <em>{ultimoAtendido.pedido}</em>)
+            <em>{ultimoAtendido.pedido.join(", ")}</em>)
           </span>
         )}
       </div>
@@ -156,7 +143,7 @@ export function ColaDeClientes({ queue, nextId, onNextIdChange, onLog, refreshTi
               <span>{c.llegada}</span>
             </div>
             <div className="ticket-name">{c.nombre}</div>
-            <div className="ticket-order">{c.pedido}</div>
+            <div className="ticket-order">{c.pedido.join(", ")}</div>
           </div>
         ))}
       </div>
@@ -166,7 +153,7 @@ export function ColaDeClientes({ queue, nextId, onNextIdChange, onLog, refreshTi
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSelectComida={handleSelectFromModal}
-        comidaSeleccionada={platoSeleccionado} 
+        comidasSeleccionadas={platosSeleccionados}
       />
     </section>
   );

@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { COMIDAS_TIPICAS, ComidaTipica } from "../datasets/datasetComidas.data";
 
 interface PropsModalCarta {
   isOpen: boolean;
   onClose: () => void;
   onSelectComida: (comida: ComidaTipica) => void;
-  comidaSeleccionada?: ComidaTipica | null;
+  comidasSeleccionadas?: ComidaTipica[];
 }
 
 type CategoriaFiltro = "Todas" | "Platos Fuertes" | "Sopas Tradicionales" | "Antojos & Amasijos" | "Postres";
@@ -14,9 +14,14 @@ export function ModalCartaComidas({
   isOpen,
   onClose,
   onSelectComida,
-  comidaSeleccionada,
+  comidasSeleccionadas = [],
 }: PropsModalCarta) {
   const [categoriaActiva, setCategoriaActiva] = useState<CategoriaFiltro>("Todas");
+  const dishesGridRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    dishesGridRef.current?.scrollTo({ top: 0 });
+  }, [categoriaActiva]);
 
   // Cerrar modal al presionar la tecla Escape
   useEffect(() => {
@@ -87,9 +92,9 @@ export function ModalCartaComidas({
         </div>
 
         {/* Cuadrícula de Platos */}
-        <div className="modal-dishes-grid">
+        <div className="modal-dishes-grid" ref={dishesGridRef}>
           {platosFiltrados.map((plato) => {
-            const isSelected = comidaSeleccionada?.id === plato.id;
+            const isSelected = comidasSeleccionadas.some((comida) => comida.id === plato.id);
 
             return (
               <div
@@ -150,7 +155,7 @@ export function ModalCartaComidas({
                         handleSeleccionar(plato);
                       }}
                     >
-                      {isSelected ? "✓ Seleccionado (Confirmar)" : "🍽️ Elegir este plato"}
+                      {isSelected ? "✓ Agregar otra porción" : "🍽️ Agregar este plato"}
                     </button>
                   </div>
                 </div>
@@ -162,7 +167,7 @@ export function ModalCartaComidas({
         {/* Pie del Modal */}
         <div className="modal-footer">
           <span className="modal-footer-hint">
-            💡 Al pulsar sobre un plato se seleccionará y se cerrará esta ventana automáticamente.
+            💡 Puedes volver a abrir la carta para agregar varios platos a la misma orden.
           </span>
           <button type="button" className="btn btn-ghost" onClick={onClose}>
             Volver a la cola

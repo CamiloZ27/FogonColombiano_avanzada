@@ -1,4 +1,5 @@
 import { Pedido } from '../types/pedidos.types';
+import { ComparativaBigOResult, MetricaBusqueda, PasoTraza } from '../types/operaciones.types';
 
 export function buscarConstante(pedidos: Pedido[], indice: number) {
   const inicio = performance.now();
@@ -101,4 +102,181 @@ export function calcularSemanaFidelizacion(metaProductos: number, a1: number, d:
   // Despejamos n: n = ((an - a1) / d) + 1
   const n = ((metaProductos - a1) / d) + 1;
   return Math.floor(n);
+}
+
+export function analizarComparativaBigO(pedidos: Pedido[], idBuscar: number): ComparativaBigOResult {
+  const total = pedidos.length;
+
+  if (total === 0) {
+    const metricaVacia = (nombre: string, notacion: string): MetricaBusqueda => ({
+      nombre,
+      notacion,
+      operaciones: 0,
+      tiempoMs: 0,
+      encontrado: false,
+      complejidadTeorica: { mejor: notacion, promedio: notacion, peor: notacion, espacio: "O(1)" },
+      explicacion: "No hay elementos en el dataset.",
+      trazas: []
+    });
+
+    return {
+      idBuscado: idBuscar,
+      totalElementos: 0,
+      pedido: null,
+      metricaConstante: metricaVacia("Acceso Directo por Hash Map", "O(1)"),
+      metricaBinaria: metricaVacia("Búsqueda Binaria", "O(log n)"),
+      metricaLineal: metricaVacia("Búsqueda Lineal", "O(n)")
+    };
+  }
+
+  // 1. Preparar mapa Hash para O(1)
+  const mapa = new Map<number, Pedido>();
+  for (const p of pedidos) {
+    mapa.set(p.id_pedido, p);
+  }
+
+  // 2. Preparar arreglo ordenado para O(log n)
+  const pedidosOrdenados = [...pedidos].sort((a, b) => a.id_pedido - b.id_pedido);
+
+  // --- Ejecutar O(1): Acceso Directo / Hash ---
+  const inicioHash = performance.now();
+  const pedidoHash = mapa.get(idBuscar) ?? null;
+  const tiempoHash = performance.now() - inicioHash;
+
+  const metricaConstante: MetricaBusqueda = {
+    nombre: "Acceso Directo por Hash Map",
+    notacion: "O(1)",
+    operaciones: 1,
+    tiempoMs: tiempoHash,
+    encontrado: pedidoHash !== null,
+    complejidadTeorica: {
+      mejor: "O(1)",
+      promedio: "O(1)",
+      peor: "O(1)",
+      espacio: "O(n) tabla hash"
+    },
+    explicacion: `Calcula directamente la posición de memoria a través de la función hash de la clave ${idBuscar}. Acceso instantáneo en tiempo constante.`,
+    trazas: [
+      {
+        paso: 1,
+        descripcion: `Lookup directo de clave hash ${idBuscar} en tabla de ${total} registros. Resultado: ${pedidoHash ? "Encontrado" : "No existe"}.`
+      }
+    ]
+  };
+
+  // --- Ejecutar O(log n): Búsqueda Binaria ---
+  let izq = 0;
+  let der = pedidosOrdenados.length - 1;
+  let opsBin = 0;
+  const trazasBin: PasoTraza[] = [];
+  let pedidoBin: Pedido | null = null;
+  const inicioBin = performance.now();
+
+  while (izq <= der) {
+    opsBin++;
+    const medio = Math.floor((izq + der) / 2);
+    const actual = pedidosOrdenados[medio];
+    if (!actual) break;
+
+    trazasBin.push({
+      paso: opsBin,
+      descripcion: `Paso ${opsBin}: Rango evaluado [índice ${izq} .. ${der}]. Centro índice ${medio} (ID: ${actual.id_pedido}).`,
+      rango: [izq, der],
+      indiceEvaluado: medio
+    });
+
+    if (actual.id_pedido === idBuscar) {
+      pedidoBin = actual;
+      break;
+    } else if (actual.id_pedido < idBuscar) {
+      izq = medio + 1;
+    } else {
+      der = medio - 1;
+    }
+  }
+  const tiempoBin = performance.now() - inicioBin;
+  const maxOpsBinEsperadas = Math.ceil(Math.log2(Math.max(total, 1))) + 1;
+
+  const metricaBinaria: MetricaBusqueda = {
+    nombre: "Búsqueda Binaria (Bisección)",
+    notacion: "O(log n)",
+    operaciones: opsBin,
+    tiempoMs: tiempoBin,
+    encontrado: pedidoBin !== null,
+    complejidadTeorica: {
+      mejor: "O(1) (si el centro coincide)",
+      promedio: `O(log n) ≈ ${Math.ceil(Math.log2(Math.max(total, 2)))} ops`,
+      peor: `O(log n) ≈ ${maxOpsBinEsperadas} ops`,
+      espacio: "O(1) auxiliar (requiere orden previo)"
+    },
+    explicacion: `Divide recursivamente el espacio ordenado a la mitad en cada iteración. Para ${total} pedidos, solo requiere a lo sumo ⌈log₂(${total})⌉ = ${Math.ceil(Math.log2(Math.max(total, 2)))} comparaciones.`,
+    trazas: trazasBin
+  };
+
+  // --- Ejecutar O(n): Búsqueda Lineal ---
+  let opsLin = 0;
+  let pedidoLin: Pedido | null = null;
+  const trazasLin: PasoTraza[] = [];
+  const inicioLin = performance.now();
+
+  for (let i = 0; i < pedidos.length; i++) {
+    opsLin++;
+    const actual = pedidos[i];
+    if (actual && actual.id_pedido === idBuscar) {
+      pedidoLin = actual;
+      if (trazasLin.length < 4 || i === pedidos.length - 1) {
+        trazasLin.push({
+          paso: opsLin,
+          descripcion: `Índice ${i}: ¡ID ${actual.id_pedido} coincide con el objetivo! Deteniendo búsqueda.`,
+          indiceEvaluado: i
+        });
+      }
+      break;
+    }
+    if (i < 3) {
+      trazasLin.push({
+        paso: opsLin,
+        descripcion: `Índice ${i}: ID ${actual?.id_pedido} ≠ ${idBuscar}. Avanzando al siguiente elemento...`,
+        indiceEvaluado: i
+      });
+    }
+  }
+  const tiempoLin = performance.now() - inicioLin;
+
+  if (opsLin > 4 && pedidoLin === null) {
+    trazasLin.push({
+      paso: opsLin,
+      descripcion: `Se completaron los ${total} pasos secuenciales sin encontrar el ID ${idBuscar}.`
+    });
+  } else if (opsLin > 5 && pedidoLin !== null && trazasLin.length <= 4) {
+    trazasLin.push({
+      paso: opsLin,
+      descripcion: `Se recorrieron ${opsLin} elementos secuencialmente hasta hallar la coincidencia.`
+    });
+  }
+
+  const metricaLineal: MetricaBusqueda = {
+    nombre: "Búsqueda Lineal (Secuencial)",
+    notacion: "O(n)",
+    operaciones: opsLin,
+    tiempoMs: tiempoLin,
+    encontrado: pedidoLin !== null,
+    complejidadTeorica: {
+      mejor: "O(1) (primer elemento)",
+      promedio: `O(n / 2) ≈ ${Math.round(total / 2)} ops`,
+      peor: `O(n) = ${total} ops`,
+      espacio: "O(1) auxiliar"
+    },
+    explicacion: `Evalúa elemento por elemento desde el inicio. En el peor caso (último elemento o inexistente) debe inspeccionar los ${total} pedidos uno por uno.`,
+    trazas: trazasLin
+  };
+
+  return {
+    idBuscado: idBuscar,
+    totalElementos: total,
+    pedido: pedidoHash ?? pedidoBin ?? pedidoLin,
+    metricaConstante,
+    metricaBinaria,
+    metricaLineal
+  };
 }

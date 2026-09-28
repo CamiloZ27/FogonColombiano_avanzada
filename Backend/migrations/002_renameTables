@@ -1,0 +1,30 @@
+DO $$
+BEGIN
+    -- Renombrar fecha_creación a fecha_creacion en las tablas correspondientes.
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = current_schema()
+          AND table_name = 'usuarios'
+          AND column_name = 'fecha_creación'
+    ) THEN
+        ALTER TABLE usuarios RENAME COLUMN "fecha_creación" TO fecha_creacion;
+    END IF;
+
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = current_schema()
+          AND table_name = 'transacciones'
+          AND column_name = 'fecha_creación'
+    ) THEN
+        ALTER TABLE transacciones RENAME COLUMN "fecha_creación" TO fecha_creacion;
+    END IF;
+
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = current_schema()
+          AND table_name = 'anomalias'
+          AND column_name = 'fecha_creación'
+    ) THEN
+        ALTER TABLE anomalias RENAME COLUMN "fecha_creación" TO fecha_creacion;
+    END IF;
+END $$;

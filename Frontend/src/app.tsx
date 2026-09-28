@@ -8,13 +8,15 @@ import { ColaDeClientes } from "./components/colaCliente.component";
 import { PilaDeOperaciones } from "./components/operaciones.component";
 import { PlaneadorDeRutas } from "./components/rutas.component";
 import { BusquedaDePedidos } from "./components/busquedaPedidos.component";
+import { AnomaliasDashboard } from "./components/anomalias.component";
+import { FormularioTransaccionUsuario } from "./components/formularioTransaccion.components";
 
 function now(): string {
   return new Date().toLocaleTimeString("es-CO", { hour12: false });
 }
 
 export default function App() {
-  const [view, setView] = useState<Vista>("cola");
+  const [view, setView] = useState<Vista | "anomalias" | "transaccion">("cola");
 
   // Las estructuras de datos viven una sola vez por sesión, fuera del ciclo
   // de render de React; `tick` fuerza el re-render cuando cambian.
@@ -62,6 +64,18 @@ export default function App() {
           >
             Búsqueda de pedidos
           </button>
+          <button
+            className={`nav-item ${view === "anomalias" ? "active" : ""}`}
+            onClick={() => setView("anomalias")}
+          >
+            Anomalías
+          </button>
+          <button
+            className={`nav-item ${view === "transaccion" ? "active" : ""}`}
+            onClick={() => setView("transaccion")}
+          >
+            Formulario de transacción
+          </button>
         </nav>
 
         <p className="sidebar-foot">
@@ -83,6 +97,8 @@ export default function App() {
         {view === "operaciones" && <PilaDeOperaciones stack={stackRef.current} refreshTick={tick} />}
         {view === "rutas" && <PlaneadorDeRutas graph={graphRef.current} onLog={log} />}
         {view === "busqueda" && <BusquedaDePedidos onLog={log} />}
+        {view === "anomalias" && <AnomaliasDashboard />}
+        {view === "transaccion" && <FormularioTransaccionUsuario />}
       </main>
     </div>
   );

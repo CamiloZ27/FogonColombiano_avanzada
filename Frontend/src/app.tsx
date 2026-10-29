@@ -10,13 +10,16 @@ import { PlaneadorDeRutas } from "./components/rutas.component";
 import { BusquedaDePedidos } from "./components/busquedaPedidos.component";
 import { AnomaliasDashboard } from "./components/anomalias.component";
 import { FormularioTransaccionUsuario } from "./components/formularioTransaccion.components";
+import { PrediccionVentas } from "./components/prediccionVentas.component";
+
+type ViewType = Vista | "anomalias" | "transaccion" | "prediccion";
 
 function now(): string {
   return new Date().toLocaleTimeString("es-CO", { hour12: false });
 }
 
 export default function App() {
-  const [view, setView] = useState<Vista | "anomalias" | "transaccion">("cola");
+  const [view, setView] = useState<ViewType>("cola");
 
   // Las estructuras de datos viven una sola vez por sesión, fuera del ciclo
   // de render de React; `tick` fuerza el re-render cuando cambian.
@@ -76,6 +79,12 @@ export default function App() {
           >
             Formulario de transacción
           </button>
+          <button
+            className={`nav-item ${view === "prediccion" ? "active" : ""}`}
+            onClick={() => setView("prediccion")}
+          >
+            Predicción de ventas
+          </button>
         </nav>
 
         <p className="sidebar-foot">
@@ -99,6 +108,7 @@ export default function App() {
         {view === "busqueda" && <BusquedaDePedidos onLog={log} />}
         {view === "anomalias" && <AnomaliasDashboard />}
         {view === "transaccion" && <FormularioTransaccionUsuario />}
+        {view === "prediccion" && <PrediccionVentas />}
       </main>
     </div>
   );

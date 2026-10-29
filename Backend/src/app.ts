@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { dashboardRouter } from './routes/dashboard.routes';
 import transaccionesRoutes from './routes/transacciones.routes';
+import { prediccionRouter } from './routes/prediccion.routes';
 
 export const app = express();
 
@@ -18,3 +19,4 @@ app.use(express.urlencoded({ extended: true }));
 // 3. Definición de Rutas
 app.use('/api/dashboard', dashboardRouter);
 app.use('/api/transacciones', transaccionesRoutes);
+app.use('/api/prediccion', prediccionRouter);

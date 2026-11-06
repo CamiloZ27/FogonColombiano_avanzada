@@ -85,7 +85,7 @@ function GraficaSVG({ datos }: { datos: PuntoGrafica[] }) {
       )}
       {predicciones.length > 1 && (
         <polyline
-          points={`${px(offsetPred)},${py(historicos.at(-1)?.total ?? 0)} ${ptPred}`}
+          points={`${px(offsetPred)},${py(historicos[historicos.length - 1]?.total ?? 0)} ${ptPred}`}
           fill="none" stroke="#3b82f6" strokeWidth="2.5" strokeDasharray="8,5"
           strokeLinejoin="round" strokeLinecap="round" />
       )}
@@ -134,7 +134,9 @@ function BadgeFuente({ fuente, listo }: { fuente: string; listo: boolean }) {
     mixto:   { bg: 'var(--accent-soft)', color: 'var(--text-muted)', texto: '🔀 Datos reales + demostración' },
     backend: { bg: '#d1fae5',            color: '#065f46',            texto: '✅ Datos reales del backend' },
   };
-  const cfg = configs[fuente] ?? configs.demo;
+  const cfg = configs[fuente] ?? {
+    bg: 'var(--accent-soft)', color: 'var(--text-muted)', texto: '📊 Dataset de demostración',
+  };
   return (
     <span style={{
       display: 'inline-block', marginTop: '0.5rem',

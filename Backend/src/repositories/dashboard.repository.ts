@@ -209,7 +209,7 @@ export async function obtenerAnomaliasRecientes(periodo: Periodo, limite = 20) {
   validarPeriodo(periodo);
   const { rows } = await pool.query(
     `SELECT
-        a.id, a.tipo, a.nivel, a.fecha_creacion,
+        a.id, a.tipo, a.nivel, a.estado, a.fecha_creacion,
         t.id AS transaccion_id, t.valor, t.metodo_pago,
         u.id AS usuario_id, u.nombre
      FROM anomalias a

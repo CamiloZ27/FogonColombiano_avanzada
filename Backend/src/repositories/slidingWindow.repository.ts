@@ -7,39 +7,119 @@ import {
 } from '../types/anomalias.types';
 
 /**
- * Umbrales de la ventana deslizante. Ajusta según tu criterio de negocio
- * o mueve esto a variables de entorno / tabla de configuración.
+ * Configuración de la Ventana Deslizante (Slide 36, 37, 38, 39)
  */
-const CONFIG_VENTANA = {
-  segundos: 300, // ventana de 5 minutos
-  transaccionesParaAlerta: 3, // desde esta cantidad en la ventana = sospechoso
-  desviacionesParaAlerta: 3, // valor > promedio + 3 * desviación = atípico
+export const CONFIG_VENTANA = {
+  segundos: 3, // Ventana por defecto: 3 segundos (configurable, Slide 36 y 39)
+  transaccionesParaAlerta: 3, // Regla principal: 3 o más transacciones en la ventana = anomalía (Slide 39)
+  usarLimiteHorario: false, // Activable para límites dinámicos según franja horaria (Slide 38)
+  desviacionesParaAlerta: 3, // Atípico frente a comportamiento normal
   historialSegundos: 30 * 24 * 60 * 60, // 30 días para calcular promedio/desviación
 };
 
 /**
+ * Slide 38: Límites configurables según la franja horaria:
+ * • Por la mañana (05:00:01 a 12:00:00) -> límite de 10
+ * • Por la tarde-noche (12:00:01 a 20:00:00) -> límite de 6
+ * • Por la noche-madrugada (20:00:01 a 05:00:00) -> límite de 3
+ */
+export function obtenerLimiteSegunHorario(fecha: Date = new Date()): number {
+  const hora = fecha.getHours();
+  const minutos = fecha.getMinutes();
+  const segundos = fecha.getSeconds();
+  const tiempoEnSegundos = hora * 3600 + minutos * 60 + segundos;
+
+  // 05:00:01 (18001s) a 12:00:00 (43200s)
+  if (tiempoEnSegundos > 5 * 3600 && tiempoEnSegundos <= 12 * 3600) {
+    return 10;
+  }
+  // 12:00:01 (43201s) a 20:00:00 (72000s)
+  if (tiempoEnSegundos > 12 * 3600 && tiempoEnSegundos <= 20 * 3600) {
+    return 6;
+  }
+  // 20:00:01 a 05:00:00
+  return 3;
+}
+
+export interface TransaccionVentanaItem {
+  id?: number;
+  usuario_id: number;
+  valor: number;
+  fecha_txn: Date;
+}
+
+/**
+ * Implementación de la estructura de datos de Ventana Deslizante (Sliding Window):
+ * Slides 29-34, Slide 41 y Slide 43:
+ * 1. Cada usuario tiene su propia ventana independiente (Slide 43: Usuario 1 -> [T1], Usuario 2 -> [T2]).
+ * 2. ENTRA el nuevo elemento.
+ * 3. SALEN los elementos que caen fuera de los X segundos (Slide 31: "SALE un elemento, ENTRA un elemento").
+ * 4. Se cuentan los elementos vigentes dentro de la ventana.
+ */
+export class VentanaDeslizanteManager {
+  private static ventanasPorUsuario: Map<number, TransaccionVentanaItem[]> = new Map();
+
+  public static deslizarVentana(
+    usuarioId: number,
+    nuevaTxn: TransaccionVentanaItem,
+    ventanaSegundos: number = CONFIG_VENTANA.segundos
+  ): TransaccionVentanaItem[] {
+    let ventana = this.ventanasPorUsuario.get(usuarioId);
+    if (!ventana) {
+      ventana = [];
+      this.ventanasPorUsuario.set(usuarioId, ventana);
+    }
+
+    // ENTRA nuevo elemento
+    ventana.push(nuevaTxn);
+
+    // Ordenar cronológicamente (Slide 37)
+    ventana.sort((a, b) => a.fecha_txn.getTime() - b.fecha_txn.getTime());
+
+    // SALEN los elementos fuera de la ventana de X segundos
+    const tiempoMaximo = nuevaTxn.fecha_txn.getTime();
+    const tiempoMinimo = tiempoMaximo - ventanaSegundos * 1000;
+
+    while (ventana.length > 0 && ventana[0].fecha_txn.getTime() < tiempoMinimo) {
+      ventana.shift();
+    }
+
+    return [...ventana];
+  }
+
+  public static obtenerVentana(usuarioId: number): TransaccionVentanaItem[] {
+    return this.ventanasPorUsuario.get(usuarioId) ?? [];
+  }
+
+  public static limpiar(): void {
+    this.ventanasPorUsuario.clear();
+  }
+}
+
+/**
  * Trae las transacciones del usuario dentro de la ventana deslizante
- * (últimos N segundos, ordenadas de la más reciente a la más antigua).
+ * desde la base de datos (últimos N segundos respecto a la fecha dada).
  */
 export async function obtenerTransaccionesEnVentana(
   usuarioId: number,
   ventanaSegundos: number = CONFIG_VENTANA.segundos,
   fechaReferencia: Date | string = new Date()
 ): Promise<Transaccion[]> {
+  const ref = typeof fechaReferencia === 'string' ? new Date(fechaReferencia) : fechaReferencia;
   const { rows } = await pool.query<Transaccion>(
     `SELECT *
        FROM transacciones
       WHERE usuario_id = $1
-        AND fecha_txn BETWEEN $3::timestamp - ($2 * INTERVAL '1 second') AND $3::timestamp
-      ORDER BY fecha_txn DESC`,
-    [usuarioId, ventanaSegundos, fechaReferencia]
+        AND fecha_txn >= $3::timestamp - ($2 * INTERVAL '1 second')
+        AND fecha_txn <= $3::timestamp
+      ORDER BY fecha_txn ASC`,
+    [usuarioId, ventanaSegundos, ref]
   );
   return rows;
 }
 
 /**
- * Estadísticas históricas del usuario (promedio y desviación estándar del
- * monto) para poder detectar montos atípicos frente a su comportamiento normal.
+ * Estadísticas históricas del usuario (promedio y desviación estándar del monto).
  */
 async function obtenerEstadisticasHistoricas(
   usuarioId: number,
@@ -68,22 +148,39 @@ async function obtenerEstadisticasHistoricas(
 }
 
 /**
- * Evalúa una transacción recién creada contra la ventana deslizante del
- * usuario y decide si constituye una anomalía. NO inserta nada todavía:
- * solo calcula. Llama a registrarAnomalia() con el resultado si aplica.
+ * Evalúa una transacción contra la ventana deslizante del usuario (Slide 41).
  */
 export async function evaluarTransaccion(
   usuarioId: number,
   valorTransaccionActual: number,
   ventanaSegundos: number = CONFIG_VENTANA.segundos,
-  fechaReferencia: Date | string = new Date()
+  fechaReferencia: Date | string = new Date(),
+  transaccionId?: number
 ): Promise<ResultadoDeteccion> {
+  const fechaRef = typeof fechaReferencia === 'string' ? new Date(fechaReferencia) : fechaReferencia;
+
+  // 1. Deslizar ventana en memoria (Slide 29, 31, 41, 43)
+  const itemActual: TransaccionVentanaItem = {
+    id: transaccionId,
+    usuario_id: usuarioId,
+    valor: valorTransaccionActual,
+    fecha_txn: fechaRef,
+  };
+  const ventanaEnMemoria = VentanaDeslizanteManager.deslizarVentana(
+    usuarioId,
+    itemActual,
+    ventanaSegundos
+  );
+
+  // 2. Transacciones en ventana persistidas en BD
   const transaccionesEnVentana = await obtenerTransaccionesEnVentana(
     usuarioId,
     ventanaSegundos,
-    fechaReferencia
+    fechaRef
   );
-  const cantidadEnVentana = transaccionesEnVentana.length;
+
+  // Considerar el recuento consolidado (memoria y BD)
+  const cantidadEnVentana = Math.max(transaccionesEnVentana.length, ventanaEnMemoria.length);
 
   const { promedio, desviacion } = await obtenerEstadisticasHistoricas(
     usuarioId,
@@ -101,15 +198,20 @@ export async function evaluarTransaccion(
     },
   };
 
-  // Regla 1: demasiadas transacciones en poco tiempo
-  if (cantidadEnVentana >= CONFIG_VENTANA.transaccionesParaAlerta) {
+  // Determinar umbral de alerta (Slide 38 o Slide 39)
+  const umbralAlerta = CONFIG_VENTANA.usarLimiteHorario
+    ? obtenerLimiteSegunHorario(fechaRef)
+    : CONFIG_VENTANA.transaccionesParaAlerta;
+
+  // Regla 1 (Slide 36 y 39): Múltiples transacciones dentro de la ventana de X segundos
+  if (cantidadEnVentana >= umbralAlerta) {
     resultado.esAnomalia = true;
-    resultado.tipo = 'frecuencia_alta';
-    resultado.nivel = calcularNivelPorFrecuencia(cantidadEnVentana);
+    resultado.tipo = 'multiples_transacciones'; // O 'POSIBLE_FRAUDE'
+    resultado.nivel = calcularNivelPorFrecuencia(cantidadEnVentana, umbralAlerta);
     return resultado;
   }
 
-  // Regla 2: monto atípico frente al historial del usuario
+  // Regla 2: Monto atípico frente al historial del usuario
   if (promedio !== null && desviacion !== null && desviacion > 0) {
     const umbral = promedio + CONFIG_VENTANA.desviacionesParaAlerta * desviacion;
     if (valorTransaccionActual > umbral) {
@@ -123,9 +225,9 @@ export async function evaluarTransaccion(
   return resultado;
 }
 
-function calcularNivelPorFrecuencia(cantidad: number): NivelAnomalia {
-  if (cantidad >= CONFIG_VENTANA.transaccionesParaAlerta * 3) return 'critico';
-  if (cantidad >= CONFIG_VENTANA.transaccionesParaAlerta * 2) return 'alto';
+function calcularNivelPorFrecuencia(cantidad: number, umbral: number = 3): NivelAnomalia {
+  if (cantidad >= umbral * 3) return 'critico';
+  if (cantidad >= umbral * 2) return 'alto';
   return 'medio';
 }
 
@@ -137,7 +239,7 @@ function calcularNivelPorMonto(valor: number, umbral: number): NivelAnomalia {
 }
 
 /**
- * Inserta la anomalía detectada, asociada a la transacción que la disparó.
+ * Inserta la anomalía detectada en la base de datos asociada a la transacción que la disparó.
  */
 export async function registrarAnomalia(
   transaccionId: number,
@@ -164,22 +266,21 @@ export async function registrarAnomalia(
 }
 
 /**
- * Punto de entrada único: úsalo justo después de insertar la transacción
- * en tu controlador/servicio de pagos.
- *   const txn = await crearTransaccion(...)
- *   await detectarYRegistrarAnomalia(txn.usuario_id, txn.id, Number(txn.valor))
+ * Punto de entrada único para evaluar y registrar anomalía si aplica.
  */
 export async function detectarYRegistrarAnomalia(
   usuarioId: number,
   transaccionId: number,
   valorTransaccion: number,
-  fechaReferencia: Date | string = new Date()
+  fechaReferencia: Date | string = new Date(),
+  ventanaSegundos: number = CONFIG_VENTANA.segundos
 ): Promise<Anomalia | null> {
   const resultado = await evaluarTransaccion(
     usuarioId,
     valorTransaccion,
-    CONFIG_VENTANA.segundos,
-    fechaReferencia
+    ventanaSegundos,
+    fechaReferencia,
+    transaccionId
   );
   if (!resultado.esAnomalia) return null;
   return registrarAnomalia(transaccionId, resultado);
@@ -187,8 +288,7 @@ export async function detectarYRegistrarAnomalia(
 
 /**
  * Para el punto "Visualización de la ventana deslizante" del dashboard:
- * dado el id de una anomalía, reconstruye qué transacciones cayeron dentro
- * de la ventana que la disparó (mismo usuario, mismo rango de tiempo).
+ * Reconstruye qué transacciones cayeron dentro de la ventana que disparó la anomalía.
  */
 export async function obtenerVentanaDeAnomalia(anomaliaId: number): Promise<{
   anomalia: Anomalia;
@@ -215,7 +315,8 @@ export async function obtenerVentanaDeAnomalia(anomaliaId: number): Promise<{
     `SELECT *
        FROM transacciones
       WHERE usuario_id = $1
-        AND fecha_txn BETWEEN $2::timestamp - ($3 * INTERVAL '1 second') AND $2::timestamp
+        AND fecha_txn >= $2::timestamp - ($3 * INTERVAL '1 second')
+        AND fecha_txn <= $2::timestamp
       ORDER BY fecha_txn ASC`,
     [transaccionDisparadora.usuario_id, transaccionDisparadora.fecha_txn, anomalia.ventana_segundos]
   );

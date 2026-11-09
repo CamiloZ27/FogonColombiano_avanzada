@@ -2,6 +2,7 @@ export type Periodo = 'day' | 'week' | 'month';
 
 export type TipoAnomalia =
   | 'multiples_transacciones'
+  | 'POSIBLE_FRAUDE'
   | 'monto_atipico'
   | 'frecuencia_alta'
   | 'usuario_recurrente';

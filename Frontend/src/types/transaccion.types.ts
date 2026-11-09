@@ -6,20 +6,27 @@ export type MetodoPago =
   | 'transferencia' 
   | 'nequi' 
   | 'daviplata' 
-  | 'efectivo';
+  | 'efectivo'
+  | 'Tarjeta';
 
-// DTO para la petición enviada desde React
+// DTO para la petición enviada desde React (Slide 40 y compatibilidad)
 export interface CrearTransaccionConUsuarioDTO {
-  // Datos del Usuario
-  usuario_nombre: string;
-  usuario_email: string;
-  
-  // Datos de la Transacción
-  valor: number;
-  fecha_txn: string;
-  estado: EstadoTransaccion;
-  metodo_pago?: MetodoPago;
-  hash?: string;
+  // Formato Slide 40
+  user?: string;
+  date?: string;
+  value?: number;
+  paymentMethod?: string;
+  idTxn?: number;
+
+  // Formato con alias en español
+  usuario_nombre?: string;
+  usuario_email?: string;
+  valor?: number;
+  fecha_txn?: string;
+  estado?: EstadoTransaccion;
+  metodo_pago?: string;
+
+  hash: string;
 }
 
 // Estado local para el formulario en React
@@ -29,11 +36,19 @@ export interface FormTransaccionUsuarioState {
   valor: string;
   fecha_txn: string;
   estado: EstadoTransaccion;
-  metodo_pago: MetodoPago;
+  metodo_pago: string;
   hash: string;
+  alterarHash: boolean;
 }
 
 export interface MensajeEstado {
   texto: string;
-  tipo: 'exito' | 'error' | '';
+  tipo: 'exito' | 'error' | 'alerta' | '';
+  detalle?: string;
+  anomalia?: {
+    tipo: string;
+    nivel: string;
+    cantidad_transacciones: number;
+    ventana_segundos: number;
+  } | null;
 }

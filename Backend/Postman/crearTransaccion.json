@@ -1,9 +1,8 @@
 {
-  "usuario_nombre": "",
-  "usuario_email": "",
-  "valor": 0,
-  "fecha_txn": "2026-09-28T18:48:00.000Z",
-  "estado": "",
-  "metodo_pago": "",
-  "hash": ""
+  "idTxn": 10001,
+  "user": "aa@aa.com",
+  "date": "2026-09-23T10:30:01.120Z",
+  "value": 50000,
+  "paymentMethod": "Tarjeta",
+  "hash": "c867254e4c2755255470d06197171e067c2957b494fe9579ee5d665790a61d1e"
 }

@@ -87,9 +87,7 @@ export default function App() {
           </button>
         </nav>
 
-        <p className="sidebar-foot">
-          Pilas, colas, grafos (Dijkstra) y análisis computacional Big O para optimizar el servicio del restaurante.
-        </p>
+        
       </aside>
 
       <main className="main">

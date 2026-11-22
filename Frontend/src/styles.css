@@ -136,8 +136,38 @@ button {
 /* ---------- Main ---------- */
 
 .main {
-  padding: 2.75rem 3rem;
-  max-width: 980px;
+  padding: 2.5rem 2.75rem;
+  max-width: 1140px;
+  width: 100%;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.field label {
+  font-size: 0.78rem;
+  color: #C9AD8F;
+  font-weight: 600;
+}
+
+.field input,
+.field select {
+  background: var(--bg);
+  border: 1px solid var(--rule);
+  color: var(--paper);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.9rem;
+  font-family: var(--font-body);
+}
+
+.field input:focus,
+.field select:focus {
+  outline: none;
+  border-color: var(--accent-soft);
 }
 
 @media (max-width: 780px) {

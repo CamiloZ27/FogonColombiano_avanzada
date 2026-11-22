@@ -111,7 +111,7 @@ function GraficaSVG({ datos }: { datos: PuntoGrafica[] }) {
         <rect width="11" height="11" rx="2" fill="var(--accent)" />
         <text x="16" y="9.5" fontSize="11" fill="var(--text-muted)">Histórico</text>
         <rect x="88" width="11" height="11" rx="2" fill="#3b82f6" />
-        <text x="104" y="9.5" fontSize="11" fill="var(--text-muted)">Predicción MLP (Python)</text>
+        <text x="104" y="9.5" fontSize="11" fill="var(--text-muted)">Predicción Keras/TF</text>
       </g>
 
       {/* Etiquetas X */}
@@ -155,7 +155,7 @@ export const PrediccionVentas: React.FC = () => {
   } = usePrediccionVentas();
 
   const [diasHistoria, setDiasHistoria] = useState(90);
-  const [maxIter,      setMaxIter]      = useState(1000);
+  const [maxIter,      setMaxIter]      = useState(40);
 
   const predicciones = graficaDatos.filter(p => p.esPrediccion);
   const maxPred      = Math.max(1, ...predicciones.map(p => p.total));
@@ -165,10 +165,10 @@ export const PrediccionVentas: React.FC = () => {
     <section>
       {/* Encabezado */}
       <div className="panel-heading">
-        <h1>Predicción de ventas</h1>
+        <h1>Predicción de ventas y demanda (Keras / TensorFlow)</h1>
         <p>
-          Microservicio Python · Red neuronal MLP scikit-learn (capas 64→32→16,
-          Adam optimizer, early stopping). El entrenamiento ocurre en el servidor.
+          Red neuronal secuencial Keras/TensorFlow unificada en el backend (Dense 32→16→1, normalización,
+          aumento de datos y modelo persistido en disco). Autenticado con JWT Bearer.
         </p>
         <BadgeFuente fuente={fuenteDatos} listo={estado === 'listo'} />
       </div>
@@ -186,7 +186,7 @@ export const PrediccionVentas: React.FC = () => {
           </button>
         ))}
 
-        {/* Selector iteraciones */}
+        {/* Selector epochs */}
         <select
           value={maxIter}
           onChange={e => setMaxIter(Number(e.target.value))}
@@ -197,10 +197,10 @@ export const PrediccionVentas: React.FC = () => {
             color: 'var(--text)', fontSize: '0.85rem', cursor: 'pointer',
           }}
         >
-          <option value={300}>300 iter (rápido)</option>
-          <option value={1000}>1 000 iter</option>
-          <option value={3000}>3 000 iter (preciso)</option>
-          <option value={5000}>5 000 iter (máx)</option>
+          <option value={25}>25 épocas (rápido)</option>
+          <option value={40}>40 épocas (balanceado)</option>
+          <option value={60}>60 épocas (preciso)</option>
+          <option value={80}>80 épocas (máximo)</option>
         </select>
 
         <button
@@ -209,7 +209,7 @@ export const PrediccionVentas: React.FC = () => {
           disabled={entrenando}
           style={{ marginLeft: 'auto' }}
         >
-          {entrenando ? '🔄 Entrenando en Python...' : estado === 'listo' ? '🔁 Reentrenar' : '▶ Entrenar y predecir'}
+          {entrenando ? '🔄 Entrenando Keras/TF...' : estado === 'listo' ? '🔁 Reentrenar' : '▶ Entrenar y predecir'}
         </button>
       </div>
 
@@ -218,8 +218,8 @@ export const PrediccionVentas: React.FC = () => {
         <div style={{ marginBottom: '1.5rem' }}>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.4rem' }}>
             {estado === 'cargando'
-              ? 'Conectando con el microservicio Python...'
-              : 'Entrenando red neuronal MLP en el servidor Python...'}
+              ? 'Conectando con el motor Keras/TensorFlow del backend...'
+              : 'Normalizando serie, aplicando aumento de datos y entrenando red Keras...'}
           </p>
           <div className="bar-track" style={{ height: '10px', borderRadius: '5px' }}>
             {/* Barra animada indeterminada */}
@@ -238,14 +238,8 @@ export const PrediccionVentas: React.FC = () => {
         <div className="order-card-not-found">
           <span className="not-found-icon">⚠️</span>
           <div>
-            <strong>Error en el microservicio</strong>
+            <strong>Error en el motor de predicción</strong>
             <p>{errorMsg}</p>
-            <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '0.4rem' }}>
-              Verifica que el servidor Python esté corriendo:&nbsp;
-              <code style={{ background: 'var(--surface)', padding: '1px 6px', borderRadius: '4px' }}>
-                cd Backend/python-prediccion &amp;&amp; python app.py
-              </code>
-            </p>
           </div>
         </div>
       )}
@@ -284,7 +278,7 @@ export const PrediccionVentas: React.FC = () => {
             <div className="stat">
               <span className="stat-label">Modelo</span>
               <span className="stat-value" style={{ fontSize: '0.9rem' }}>
-                {modeloInfo.tipo === 'mlp_sklearn' ? 'MLP (64→32→16)' : 'Reg. lineal'}
+                {modeloInfo.tipo === 'keras_tensorflow_sequential' ? 'Keras/TF (32→16→1)' : modeloInfo.tipo}
               </span>
             </div>
             {mse !== null && (
@@ -394,14 +388,10 @@ export const PrediccionVentas: React.FC = () => {
       {/* Estado idle */}
       {estado === 'idle' && (
         <div className="empty-state" style={{ flexDirection: 'column', gap: '0.5rem', padding: '3rem' }}>
-          <span style={{ fontSize: '2.5rem' }}>🐍</span>
+          <span style={{ fontSize: '2.5rem' }}>🧠</span>
           <span>
             Selecciona los parámetros y presiona{' '}
-            <strong>Entrenar y predecir</strong> para ejecutar el microservicio Python.
-          </span>
-          <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-            Asegúrate de que el microservicio está corriendo en el puerto&nbsp;
-            <code style={{ background: 'var(--surface)', padding: '1px 6px', borderRadius: '4px' }}>5001</code>
+            <strong>Entrenar y predecir</strong> para ejecutar la red neuronal Keras/TensorFlow del servidor.
           </span>
         </div>
       )}

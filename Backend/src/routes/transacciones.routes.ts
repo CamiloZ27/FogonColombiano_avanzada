@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { autenticarJWT, requerirPermiso } from '../middleware/auth.middleware';
 import {
   crearTransaccionConUsuario,
   obtenerTransacciones,
@@ -7,8 +8,10 @@ import {
 
 const router = Router();
 
-router.get('/', obtenerTransacciones);
-router.post('/', crearTransaccionConUsuario);
-router.post('/generar-hash', calcularHashEndpoint);
+router.use(autenticarJWT);
+
+router.get('/', requerirPermiso('transacciones:ver'), obtenerTransacciones);
+router.post('/', requerirPermiso('transacciones:crear'), crearTransaccionConUsuario);
+router.post('/generar-hash', requerirPermiso('transacciones:crear'), calcularHashEndpoint);
 
 export default router;

@@ -13,12 +13,14 @@ import type {
   VentanaDeAnomalia,
 } from "../types/anomalias.types";
 
+import { getAuthToken } from "./api.service";
+
 // Ajusta VITE_API_BASE_URL en tu .env si el backend no vive en /api
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4000/api/dashboard";
 const API_TOKEN = import.meta.env.VITE_APP_API_TOKEN ?? "4f43edda455d8bc7f20108481957e1cfbfdf78d423f553a4d4683746f6f6f0c6";
 
 function obtenerHeaders(): HeadersInit {
-  const token = localStorage.getItem("token");
+  const token = getAuthToken();
   return {
     "x-api-token": API_TOKEN,
     ...(token ? { Authorization: `Bearer ${token}` } : {}),

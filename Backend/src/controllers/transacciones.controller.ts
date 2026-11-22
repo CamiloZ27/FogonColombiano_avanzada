@@ -2,6 +2,10 @@ import { Request, Response } from 'express';
 import { createHmac, createHash, timingSafeEqual } from 'crypto';
 import { pool } from '../db/pool';
 import { detectarYRegistrarAnomalia } from '../repositories/slidingWindow.repository';
+import { clasificarOperacionFraude } from '../services/iaKeras.service';
+import { normalizarCanal, normalizarMetodoPago } from '../services/calidad.service';
+import { hashPassword } from '../utils/crypto.util';
+import { DEMO_PASSWORD_DEFAULT } from '../db/initDb';
 import { logger } from '../utils/logger';
 
 export const CLAVE_SECRETA_DEFAULT = process.env.APP_API_TOKEN || 'mi_llave_privada_123';
@@ -302,23 +306,77 @@ export async function crearTransaccionConUsuario(req: Request, res: Response) {
     if (existeUsuario.rows.length > 0) {
       usuarioId = existeUsuario.rows[0].id;
     } else {
+      const rolClienteRes = await client.query(`SELECT id FROM roles WHERE codigo = 'cliente'`);
+      const rolClienteId = rolClienteRes.rows[0]?.id ?? null;
+      const passDefaultHash = await hashPassword(DEMO_PASSWORD_DEFAULT);
       const nuevoUsuario = await client.query(
-        `INSERT INTO usuarios (nombre, email, fecha_creacion, fecha_actualizacion)
-         VALUES ($1, $2, NOW(), NOW())
+        `INSERT INTO usuarios (nombre, email, password_hash, rol_id, fecha_creacion, fecha_actualizacion)
+         VALUES ($1, $2, $3, $4, NOW(), NOW())
          RETURNING id`,
-        [nombre, email]
+        [nombre, email, passDefaultHash, rolClienteId]
       );
       usuarioId = nuevoUsuario.rows[0].id;
     }
 
+    const canalNorm = normalizarCanal(body.canal ?? 'presencial') ?? 'presencial';
+    const descuentoValor = Math.max(0, Number(body.descuento ?? 0));
+    const metodoNormalizado = normalizarMetodoPago(metodoPago);
+
+    const promRes = await client.query<{ prom: string | null }>(
+      `SELECT AVG(valor)::numeric AS prom FROM transacciones WHERE usuario_id = $1`,
+      [usuarioId]
+    );
+    const promUsuario = Number(promRes.rows[0]?.prom ?? 40000);
+    const evaluacionIA = await clasificarOperacionFraude({
+      monto: valor,
+      fecha,
+      metodo_pago: metodoNormalizado,
+      firma_valida: true,
+      frecuencia_ventana: 1,
+      promedio_usuario: promUsuario,
+      descuento_pct: valor > 0 ? (descuentoValor / valor) * 100 : 0,
+      canal: canalNorm,
+    }).catch(() => ({
+      clasificacion: 'normal' as const,
+      probabilidad_fraude: 0,
+      umbral_decision: 0.65,
+      nivel_riesgo: 'bajo',
+      factores_detectados: ['Clasificador IA no disponible temporalmente'],
+      modelo_entrenado_en: '',
+    }));
+
     const nuevaTransaccion = await client.query(
       `INSERT INTO transacciones 
-        (usuario_id, valor, fecha_txn, estado, hash, metodo_pago, fecha_creacion, fecha_actualizacion)
+        (usuario_id, valor, fecha_txn, estado, hash, metodo_pago, canal, descuento,
+         clasificacion_ia, score_fraude_ia, fecha_creacion, fecha_actualizacion)
        VALUES 
-        ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+        ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
        RETURNING *`,
-      [usuarioId, valor, fecha, estado, hashRecibido, metodoPago]
+      [
+        usuarioId,
+        valor,
+        fecha,
+        estado,
+        hashRecibido,
+        metodoPago,
+        canalNorm,
+        descuentoValor,
+        evaluacionIA.clasificacion,
+        evaluacionIA.probabilidad_fraude,
+      ]
     );
+
+    if (evaluacionIA.clasificacion === 'fraudulenta') {
+      await client.query(
+        `INSERT INTO anomalias (transaccion_id, tipo, nivel, cantidad_transacciones, ventana_segundos, estado, origen, detalle)
+         VALUES ($1, 'POSIBLE_FRAUDE', $2, 1, 0, 'abierta', 'keras_fraude', $3)`,
+        [
+          nuevaTransaccion.rows[0].id,
+          evaluacionIA.nivel_riesgo === 'critico' ? 'critico' : 'alto',
+          evaluacionIA.factores_detectados.join('; '),
+        ]
+      );
+    }
 
     await client.query('COMMIT');
 
@@ -328,11 +386,17 @@ export async function crearTransaccionConUsuario(req: Request, res: Response) {
     let anomalia = null;
     let advertencia: string | null = null;
     try {
+      const cfgWin = await pool.query(
+        `SELECT clave, valor FROM configuracion_sistema
+          WHERE clave IN ('ventana_deslizante_segundos')`
+      );
+      const winSeg = Number(cfgWin.rows[0]?.valor ?? 3);
       anomalia = await detectarYRegistrarAnomalia(
         usuarioId,
         txnInsertada.id,
         Number(txnInsertada.valor),
-        fecha
+        fecha,
+        winSeg
       );
     } catch (error) {
       logger.error('Error al detectar anomalías', { error, transaccionId: txnInsertada.id });
@@ -342,11 +406,14 @@ export async function crearTransaccionConUsuario(req: Request, res: Response) {
     return res.status(201).json({
       mensaje: anomalia
         ? 'Transacción registrada. ¡ALERTA: Se detectó una anomalía (POSIBLE_FRAUDE) con ventana deslizante!'
+        : evaluacionIA.clasificacion === 'fraudulenta'
+        ? 'Transacción registrada. ¡ALERTA IA KERAS: Operación clasificada como FRAUDULENTA!'
         : 'Transacción registrada correctamente (comportamiento normal)',
       transaccion: txnInsertada,
       usuario_id: usuarioId,
-      es_anomalia: Boolean(anomalia),
+      es_anomalia: Boolean(anomalia) || evaluacionIA.clasificacion === 'fraudulenta',
       anomalia,
+      evaluacion_ia: evaluacionIA,
       advertencia
     });
 

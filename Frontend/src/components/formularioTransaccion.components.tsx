@@ -13,6 +13,7 @@ import {
   SoportePagoRestaurante,
   DatosSoportePago,
 } from './SoportePagoRestaurante.component';
+import { getAuthToken } from '../services/api.service';
 
 const ESTADO_INICIAL: FormTransaccionUsuarioState = {
   usuario_nombre: 'Carlos Pérez',
@@ -65,9 +66,13 @@ export const FormularioTransaccionUsuario: React.FC = () => {
       // Sincronización directa con el backend para garantizar 100% coincidencia
       try {
         const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+        const token = getAuthToken();
         const res = await fetch(`${backendUrl}/api/transacciones/generar-hash`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
           body: JSON.stringify({
             user: email,
             date: fecha,
@@ -107,10 +112,12 @@ export const FormularioTransaccionUsuario: React.FC = () => {
 
   const enviarPeticion = async (payload: CrearTransaccionConUsuarioDTO) => {
     const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+    const token = getAuthToken();
     const response = await fetch(`${backendUrl}/api/transacciones`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: JSON.stringify(payload),
     });

@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { autenticarJWT, requerirPermiso } from '../middleware/auth.middleware';
 import {
   obtenerResumenGeneral,
   obtenerCasosMasRecurrentes,
@@ -15,6 +16,8 @@ import { obtenerVentanaDeAnomalia } from '../repositories/slidingWindow.reposito
 import { Periodo, EstadoAnomalia } from '../types/anomalias.types';
 
 export const dashboardRouter = Router();
+
+dashboardRouter.use(autenticarJWT, requerirPermiso('anomalias:ver'));
 
 const PERIODOS_VALIDOS: Periodo[] = ['day', 'week', 'month'];
 const ESTADOS_VALIDOS: EstadoAnomalia[] = ['abierta', 'revisada', 'descartada'];
@@ -150,6 +153,7 @@ dashboardRouter.get(
 
 dashboardRouter.patch(
   '/anomalia/:id/estado',
+  requerirPermiso('anomalias:gestionar'),
   asyncHandler(async (req, res) => {
     const id = Number(req.params.id);
     const estado = req.body?.estado as EstadoAnomalia;

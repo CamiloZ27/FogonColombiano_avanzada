@@ -245,7 +245,7 @@ export function BusquedaDePedidos({ onLog }: PropsBusqueda) {
                 />
               </div>
 
-              <div className="field" style={{ flex: 2 }}>
+              <div className="field field-wide">
                 <label htmlFor="input-cliente">Nombre del Cliente</label>
                 <input
                   id="input-cliente"

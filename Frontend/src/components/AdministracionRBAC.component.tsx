@@ -23,10 +23,6 @@ interface UsuarioAdmin {
   rol_nombre: string;
   documento_enmascarado: string | null;
   telefono_enmascarado: string | null;
-  tiene_password_bcrypt: boolean;
-  tiene_documento_bcrypt: boolean;
-  tiene_telefono_bcrypt: boolean;
-  tiene_pin_bcrypt: boolean;
   ultimo_login: string | null;
 }
 
@@ -47,6 +43,15 @@ interface EventoAuditoria {
   ip: string;
   fecha_creacion: string;
 }
+
+const ETIQUETAS_CONFIG: Record<string, string> = {
+  impuesto_inc_porcentaje: 'Impuesto al consumo (%)',
+  descuento_maximo_sin_alerta: 'Descuento máximo sin alerta (%)',
+  ventana_deslizante_segundos: 'Ventana de monitoreo (segundos)',
+  ventana_deslizante_limite_txn: 'Límite de operaciones por ventana',
+  ventana_usar_limite_horario: 'Usar límites según horario',
+  umbral_fraude_ia: 'Sensibilidad de alerta automática (0 a 1)',
+};
 
 export const AdministracionRBAC: React.FC = () => {
   const { usuario, tieneRol } = useAuth();
@@ -69,11 +74,6 @@ export const AdministracionRBAC: React.FC = () => {
   const [telefono, setTelefono] = useState('');
   const [pin, setPin] = useState('');
 
-  // Verificador bcrypt en vivo
-  const [campoVerif, setCampoVerif] = useState<'documento' | 'telefono' | 'pin'>('documento');
-  const [valorVerif, setValorVerif] = useState('');
-  const [resVerif, setResVerif] = useState<string | null>(null);
-
   async function cargarTodo() {
     setError(null);
     try {
@@ -85,10 +85,10 @@ export const AdministracionRBAC: React.FC = () => {
       ]);
       setRoles(rRes.roles);
       setUsuarios(uRes.usuarios);
-      setConfig(cRes.configuracion);
+      setConfig(cRes.configuracion.filter((c) => c.clave !== 'bcrypt_salt_rounds'));
       setAuditoria(aRes.eventos);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Error cargando administración RBAC');
+      setError(e instanceof Error ? e.message : 'Error cargando administración');
     }
   }
 
@@ -165,53 +165,35 @@ export const AdministracionRBAC: React.FC = () => {
         method: 'PUT',
         body: { valor },
       });
-      setMensaje(`Parámetro '${clave}' actualizado a '${valor}'.`);
+      setMensaje('Parámetro actualizado correctamente.');
       cargarTodo();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error guardando parámetro');
     }
   }
 
-  async function probarBcrypt(e: FormEvent) {
-    e.preventDefault();
-    setResVerif(null);
-    try {
-      const r = await apiRequest<{ coincide: boolean; metodo: string }>('/api/auth/verificar-dato-sensible', {
-        method: 'POST',
-        body: { campo: campoVerif, valor: valorVerif },
-      });
-      setResVerif(
-        r.coincide
-          ? `✅ Coincidencia verificada mediante ${r.metodo} contra el hash almacenado.`
-          : `❌ El valor ingresado NO coincide con el hash bcrypt registrado para tu cuenta.`
-      );
-    } catch (err) {
-      setResVerif(err instanceof Error ? err.message : 'Error verificando');
-    }
-  }
-
   return (
     <section>
       <div className="panel-heading">
-        <h1>Administración · Seguridad &amp; RBAC</h1>
+        <h1>Administración</h1>
         <p>
-          Gestión de usuarios con hashing <strong>bcrypt</strong> (contraseñas y datos sensibles), asignación de{' '}
-          <strong>roles predefinidos no editables</strong>, parámetros globales del sistema y auditoría de acceso.
+          Gestión de usuarios, asignación de roles predefinidos, configuración general del restaurante y registro de
+          actividad.
         </p>
       </div>
 
       <div className="scenarios-buttons" style={{ marginBottom: '1.5rem' }}>
         <button className={`modal-filter-btn ${tab === 'usuarios' ? 'active' : ''}`} onClick={() => setTab('usuarios')}>
-          Usuarios &amp; Asignación de Roles ({usuarios.length})
+          Usuarios ({usuarios.length})
         </button>
         <button className={`modal-filter-btn ${tab === 'roles' ? 'active' : ''}`} onClick={() => setTab('roles')}>
-          Roles Predefinidos (Inmutables · {roles.length})
+          Roles del Sistema ({roles.length})
         </button>
         <button className={`modal-filter-btn ${tab === 'config' ? 'active' : ''}`} onClick={() => setTab('config')}>
-          Configuración Global
+          Configuración
         </button>
         <button className={`modal-filter-btn ${tab === 'auditoria' ? 'active' : ''}`} onClick={() => setTab('auditoria')}>
-          Auditoría de Seguridad ({auditoria.length})
+          Registro de Actividad ({auditoria.length})
         </button>
       </div>
 
@@ -232,50 +214,47 @@ export const AdministracionRBAC: React.FC = () => {
         <>
           {esAdmin && (
             <div className="add-order-box" style={{ marginBottom: '1.5rem' }}>
-              <h2 className="add-order-title">Crear Usuario con Protección bcrypt</h2>
-              <p className="add-order-subtitle">
-                Contraseña, documento, teléfono y PIN de autorización se hashean con <code>bcrypt</code> antes de guardarse en PostgreSQL.
-              </p>
+              <h2 className="add-order-title">Nuevo Usuario</h2>
               <form className="add-order-form" onSubmit={handleCrearUsuario}>
                 <div className="form-grid-inputs">
                   <div className="field">
-                    <label>Nombre *</label>
+                    <label>Nombre completo *</label>
                     <input value={nombre} onChange={(e) => setNombre(e.target.value)} required placeholder="Ej. Camilo Zuleta" />
                   </div>
                   <div className="field">
-                    <label>Correo *</label>
+                    <label>Correo electrónico *</label>
                     <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="usuario@fogon.co" />
                   </div>
                   <div className="field">
-                    <label>Contraseña (bcrypt) *</label>
-                    <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} placeholder="Min. 6 caracteres" />
+                    <label>Contraseña *</label>
+                    <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} placeholder="Mínimo 6 caracteres" />
                   </div>
                   <div className="field">
-                    <label>Rol Predefinido *</label>
+                    <label>Rol *</label>
                     <select value={rolNuevo} onChange={(e) => setRolNuevo(e.target.value as RolCodigo)}>
                       {roles.map((r) => (
                         <option key={r.codigo} value={r.codigo}>
-                          {r.nombre} ({r.codigo})
+                          {r.nombre}
                         </option>
                       ))}
                     </select>
                   </div>
                   <div className="field">
-                    <label>Documento sensible (bcrypt)</label>
+                    <label>Documento de identidad</label>
                     <input value={documento} onChange={(e) => setDocumento(e.target.value)} placeholder="CC / NIT" />
                   </div>
                   <div className="field">
-                    <label>Teléfono sensible (bcrypt)</label>
+                    <label>Teléfono</label>
                     <input value={telefono} onChange={(e) => setTelefono(e.target.value)} placeholder="310..." />
                   </div>
                   <div className="field">
-                    <label>PIN autorización (bcrypt)</label>
+                    <label>PIN de autorización</label>
                     <input type="password" value={pin} onChange={(e) => setPin(e.target.value)} placeholder="4 dígitos" />
                   </div>
                 </div>
                 <div className="form-actions">
                   <button className="btn btn-accent" type="submit">
-                    Crear Usuario Protegido
+                    Crear Usuario
                   </button>
                 </div>
               </form>
@@ -287,8 +266,8 @@ export const AdministracionRBAC: React.FC = () => {
               <thead>
                 <tr>
                   <th>Usuario</th>
-                  <th>Rol Predefinido (RBAC)</th>
-                  <th>Datos Sensibles (bcrypt)</th>
+                  <th>Rol</th>
+                  <th>Datos registrados</th>
                   <th>Estado</th>
                   {esAdmin && <th>Acciones</th>}
                 </tr>
@@ -324,10 +303,9 @@ export const AdministracionRBAC: React.FC = () => {
                         <span className="tag-orange">{u.rol_nombre}</span>
                       )}
                     </td>
-                    <td style={{ fontSize: '0.76rem', fontFamily: 'var(--font-mono)' }}>
-                      <div>🔑 Pass: {u.tiene_password_bcrypt ? 'bcrypt OK' : 'sin hash'}</div>
-                      <div>🪪 Doc: {u.documento_enmascarado ?? '—'} {u.tiene_documento_bcrypt ? '(bcrypt)' : ''}</div>
-                      <div>📱 Tel: {u.telefono_enmascarado ?? '—'} {u.tiene_telefono_bcrypt ? '(bcrypt)' : ''}</div>
+                    <td style={{ fontSize: '0.78rem', color: '#C9AD8F' }}>
+                      <div>Doc: {u.documento_enmascarado ?? '—'}</div>
+                      <div>Tel: {u.telefono_enmascarado ?? '—'}</div>
                     </td>
                     <td>
                       <span className={`order-status-badge ${u.estado === 'activo' ? 'status-entregado' : 'status-solicitado'}`}>
@@ -350,31 +328,6 @@ export const AdministracionRBAC: React.FC = () => {
               </tbody>
             </table>
           </div>
-
-          {/* Verificador en vivo de dato sensible bcrypt */}
-          <div className="trace-box" style={{ marginTop: '1.5rem' }}>
-            <h3 style={{ marginTop: 0 }}>Verificación en Vivo de Datos Sensibles (bcrypt.compare)</h3>
-            <p style={{ fontSize: '0.84rem', color: '#C9AD8F' }}>
-              Comprueba que tus datos sensibles (documento, teléfono o PIN) no se guardan en texto plano, sino verificables vía hash bcrypt.
-            </p>
-            <form onSubmit={probarBcrypt} className="form-row" style={{ marginBottom: '0.5rem' }}>
-              <select value={campoVerif} onChange={(e) => setCampoVerif(e.target.value as 'documento' | 'telefono' | 'pin')}>
-                <option value="documento">Documento (demo admin: 1010001001)</option>
-                <option value="telefono">Teléfono (demo admin: 3101110001)</option>
-                <option value="pin">PIN Autorización (demo admin: 9999)</option>
-              </select>
-              <input
-                value={valorVerif}
-                onChange={(e) => setValorVerif(e.target.value)}
-                placeholder="Valor en texto claro a verificar"
-                required
-              />
-              <button className="btn btn-accent" type="submit">
-                Verificar Hash bcrypt
-              </button>
-            </form>
-            {resVerif && <div style={{ fontSize: '0.86rem', marginTop: '0.5rem' }}>{resVerif}</div>}
-          </div>
         </>
       )}
 
@@ -384,10 +337,10 @@ export const AdministracionRBAC: React.FC = () => {
           <div className="order-card-not-found" style={{ marginBottom: '1.25rem', borderColor: 'var(--accent-soft)' }}>
             <span className="not-found-icon">🔒</span>
             <div>
-              <strong>Política RBAC de Roles Inmutables</strong>
+              <strong>Roles Predefinidos del Sistema</strong>
               <p style={{ margin: '0.25rem 0 0', fontSize: '0.84rem' }}>
-                Los 6 roles están protegidos tanto en la API (HTTP 403) como mediante un trigger de PostgreSQL
-                (<code>trg_roles_inmutables</code>). No pueden ser editados, renombrados ni eliminados.
+                Estos roles vienen configurados de fábrica y no pueden ser editados ni eliminados. Puedes asignarlos a
+                cualquier usuario desde la pestaña Usuarios.
               </p>
             </div>
           </div>
@@ -396,33 +349,13 @@ export const AdministracionRBAC: React.FC = () => {
             {roles.map((r) => (
               <div className="bigo-card" key={r.codigo}>
                 <div className="bigo-card-head">
-                  <span className="complexity-badge badge-constant">🔒 NO EDITABLE</span>
-                  <h3>
-                    {r.nombre}{' '}
-                    <small style={{ color: '#A89078', fontFamily: 'var(--font-mono)' }}>({r.codigo})</small>
-                  </h3>
+                  <span className="complexity-badge badge-constant">🔒 PREDEFINIDO</span>
+                  <h3>{r.nombre}</h3>
                 </div>
                 <p className="bigo-card-desc">{r.descripcion}</p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginBottom: '0.8rem' }}>
-                  {r.permisos.map((p) => (
-                    <span
-                      key={p}
-                      style={{
-                        fontSize: '0.7rem',
-                        fontFamily: 'var(--font-mono)',
-                        padding: '2px 6px',
-                        borderRadius: 4,
-                        background: 'rgba(244,233,216,0.08)',
-                        color: '#E4D3B8',
-                      }}
-                    >
-                      {p}
-                    </span>
-                  ))}
-                </div>
                 <div className="bigo-card-footer">
                   <span>
-                    Nivel acceso: <strong>{r.nivel_acceso}</strong>
+                    Permisos activos: <strong>{r.permisos.length}</strong>
                   </span>
                   <span>
                     Usuarios asignados: <strong>{r.usuarios_asignados}</strong>
@@ -434,10 +367,10 @@ export const AdministracionRBAC: React.FC = () => {
         </div>
       )}
 
-      {/* TAB 3: CONFIGURACIÓN GLOBAL */}
+      {/* TAB 3: CONFIGURACIÓN */}
       {tab === 'config' && (
         <div className="trace-box">
-          <h3 style={{ marginTop: 0 }}>Parámetros de Seguridad, Facturación, Ventana Deslizante e IA</h3>
+          <h3 style={{ marginTop: 0 }}>Parámetros Generales del Restaurante</h3>
           <table className="bigo-table">
             <thead>
               <tr>
@@ -456,7 +389,7 @@ export const AdministracionRBAC: React.FC = () => {
         </div>
       )}
 
-      {/* TAB 4: AUDITORÍA DE SEGURIDAD */}
+      {/* TAB 4: REGISTRO DE ACTIVIDAD */}
       {tab === 'auditoria' && (
         <div style={{ overflowX: 'auto' }}>
           <table className="bigo-table">
@@ -466,8 +399,6 @@ export const AdministracionRBAC: React.FC = () => {
                 <th>Usuario</th>
                 <th>Rol</th>
                 <th>Acción</th>
-                <th>Recurso</th>
-                <th>Detalle</th>
               </tr>
             </thead>
             <tbody>
@@ -480,9 +411,7 @@ export const AdministracionRBAC: React.FC = () => {
                   <td>
                     <span className="tag-orange">{ev.rol ?? '—'}</span>
                   </td>
-                  <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}>{ev.accion}</td>
-                  <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem' }}>{ev.recurso}</td>
-                  <td style={{ fontSize: '0.76rem', color: '#C9AD8F' }}>{JSON.stringify(ev.detalle)}</td>
+                  <td style={{ fontSize: '0.82rem' }}>{ev.accion.replace(/_/g, ' ')}</td>
                 </tr>
               ))}
             </tbody>
@@ -503,7 +432,7 @@ const FilaConfig: React.FC<{
 
   return (
     <tr>
-      <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}>{cfg.clave}</td>
+      <td><strong>{ETIQUETAS_CONFIG[cfg.clave] ?? cfg.clave}</strong></td>
       <td style={{ fontSize: '0.82rem', color: '#C9AD8F' }}>{cfg.descripcion}</td>
       <td>
         {editable ? (
@@ -513,8 +442,8 @@ const FilaConfig: React.FC<{
               onChange={(e) => setVal(e.target.value)}
               style={{ background: 'var(--bg)', color: 'var(--paper)', border: '1px solid var(--rule)', borderRadius: 6, padding: '0.35rem' }}
             >
-              <option value="true">true</option>
-              <option value="false">false</option>
+              <option value="true">Activado</option>
+              <option value="false">Desactivado</option>
             </select>
           ) : (
             <input
@@ -544,4 +473,3 @@ const FilaConfig: React.FC<{
     </tr>
   );
 };
-

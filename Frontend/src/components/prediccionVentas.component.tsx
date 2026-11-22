@@ -111,7 +111,7 @@ function GraficaSVG({ datos }: { datos: PuntoGrafica[] }) {
         <rect width="11" height="11" rx="2" fill="var(--accent)" />
         <text x="16" y="9.5" fontSize="11" fill="var(--text-muted)">Histórico</text>
         <rect x="88" width="11" height="11" rx="2" fill="#3b82f6" />
-        <text x="104" y="9.5" fontSize="11" fill="var(--text-muted)">Predicción Keras/TF</text>
+        <text x="104" y="9.5" fontSize="11" fill="var(--text-muted)">Predicción</text>
       </g>
 
       {/* Etiquetas X */}
@@ -165,10 +165,10 @@ export const PrediccionVentas: React.FC = () => {
     <section>
       {/* Encabezado */}
       <div className="panel-heading">
-        <h1>Predicción de ventas y demanda (Keras / TensorFlow)</h1>
+        <h1>Predicción de ventas y demanda</h1>
         <p>
-          Red neuronal secuencial Keras/TensorFlow unificada en el backend (Dense 32→16→1, normalización,
-          aumento de datos y modelo persistido en disco). Autenticado con JWT Bearer.
+          Pronóstico automático de ventas y demanda para los próximos 14 días a partir del comportamiento histórico del
+          restaurante.
         </p>
         <BadgeFuente fuente={fuenteDatos} listo={estado === 'listo'} />
       </div>
@@ -209,7 +209,7 @@ export const PrediccionVentas: React.FC = () => {
           disabled={entrenando}
           style={{ marginLeft: 'auto' }}
         >
-          {entrenando ? '🔄 Entrenando Keras/TF...' : estado === 'listo' ? '🔁 Reentrenar' : '▶ Entrenar y predecir'}
+          {entrenando ? '🔄 Calculando pronóstico...' : estado === 'listo' ? '🔁 Recalcular' : '▶ Generar pronóstico'}
         </button>
       </div>
 
@@ -218,8 +218,8 @@ export const PrediccionVentas: React.FC = () => {
         <div style={{ marginBottom: '1.5rem' }}>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.4rem' }}>
             {estado === 'cargando'
-              ? 'Conectando con el motor Keras/TensorFlow del backend...'
-              : 'Normalizando serie, aplicando aumento de datos y entrenando red Keras...'}
+              ? 'Cargando histórico de ventas...'
+              : 'Generando pronóstico de ventas...'}
           </p>
           <div className="bar-track" style={{ height: '10px', borderRadius: '5px' }}>
             {/* Barra animada indeterminada */}
@@ -388,10 +388,10 @@ export const PrediccionVentas: React.FC = () => {
       {/* Estado idle */}
       {estado === 'idle' && (
         <div className="empty-state" style={{ flexDirection: 'column', gap: '0.5rem', padding: '3rem' }}>
-          <span style={{ fontSize: '2.5rem' }}>🧠</span>
+          <span style={{ fontSize: '2.5rem' }}>📈</span>
           <span>
-            Selecciona los parámetros y presiona{' '}
-            <strong>Entrenar y predecir</strong> para ejecutar la red neuronal Keras/TensorFlow del servidor.
+            Selecciona el rango histórico y presiona{' '}
+            <strong>Entrenar y predecir</strong> para generar el pronóstico de ventas.
           </span>
         </div>
       )}

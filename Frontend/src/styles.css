@@ -136,38 +136,80 @@ button {
 /* ---------- Main ---------- */
 
 .main {
-  padding: 2.5rem 2.75rem;
-  max-width: 1140px;
+  padding: 2.25rem 2.5rem;
+  max-width: 1180px;
   width: 100%;
+  min-width: 0;
 }
 
 .field {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
+  min-width: 0;
+  width: 100%;
 }
 
 .field label {
   font-size: 0.78rem;
   color: #C9AD8F;
   font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.field input,
-.field select {
+.field input:not([type="checkbox"]):not([type="radio"]),
+.field select,
+.field textarea,
+.add-order-form input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.add-order-form select,
+.add-order-form textarea {
+  width: 100%;
+  min-width: 0;
   background: var(--bg);
   border: 1px solid var(--rule);
   color: var(--paper);
   border-radius: 8px;
-  padding: 0.6rem 0.75rem;
-  font-size: 0.9rem;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.88rem;
   font-family: var(--font-body);
+  line-height: 1.35;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.field input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.field select,
+.add-order-form input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.add-order-form select,
+.form-row input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.form-row select {
+  height: 40px;
+}
+
+.add-order-form input[type="file"],
+.form-row input[type="file"] {
+  background: var(--bg);
+  border: 1px dashed var(--rule);
+  color: #C9AD8F;
+  border-radius: 8px;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.84rem;
+  height: 40px;
+  min-width: 0;
 }
 
 .field input:focus,
-.field select:focus {
+.field select:focus,
+.field textarea:focus,
+.add-order-form input:focus,
+.add-order-form select:focus,
+.add-order-form textarea:focus,
+.form-row input:focus,
+.form-row select:focus {
   outline: none;
   border-color: var(--accent-soft);
+  box-shadow: 0 0 0 2px rgba(221, 161, 94, 0.16);
 }
 
 @media (max-width: 780px) {
@@ -991,14 +1033,27 @@ button {
 }
 
 .form-grid-inputs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.85rem;
-  align-items: flex-end;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 0.9rem 1rem;
+  align-items: end;
 }
 
 .form-grid-inputs .field {
-  min-width: 110px;
+  min-width: 0;
+}
+
+.form-grid-inputs .field.field-wide {
+  grid-column: span 2;
+}
+
+@media (max-width: 640px) {
+  .form-grid-inputs {
+    grid-template-columns: 1fr;
+  }
+  .form-grid-inputs .field.field-wide {
+    grid-column: span 1;
+  }
 }
 
 .form-grid-inputs .field input,
@@ -1007,9 +1062,11 @@ button {
 }
 
 .form-actions {
-  margin-top: 1.2rem;
+  margin-top: 1.1rem;
   display: flex;
   justify-content: flex-end;
+  gap: 0.65rem;
+  flex-wrap: wrap;
 }
 
 /* Chips of available orders */

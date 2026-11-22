@@ -1,6 +1,5 @@
 import { Request, Response, Router } from 'express';
 import { pool } from '../db/pool';
-import { CUENTAS_DEMO, DEMO_PASSWORD_DEFAULT } from '../db/initDb';
 import { autenticarJWT, registrarAuditoria } from '../middleware/auth.middleware';
 import { esEmailValido, limpiarNombreLegible, normalizarEmail } from '../services/calidad.service';
 import { obtenerDefinicionRol, RolCodigo, UsuarioAutenticado } from '../types/rbac.types';
@@ -214,7 +213,7 @@ authRouter.put('/cambiar-password', autenticarJWT, async (req: Request, res: Res
       nuevoHash,
     ]);
     await registrarAuditoria(req, 'CAMBIO_PASSWORD', '/api/auth/cambiar-password', {});
-    return res.json({ mensaje: 'Contraseña actualizada correctamente con hash bcrypt.' });
+    return res.json({ mensaje: 'Contraseña actualizada correctamente.' });
   } catch (err) {
     console.error('[auth/cambiar-password]', err);
     return res.status(500).json({ error: 'Error al actualizar contraseña.' });
@@ -246,20 +245,5 @@ authRouter.post('/verificar-dato-sensible', autenticarJWT, async (req: Request, 
     console.error('[auth/verificar-dato-sensible]', err);
     return res.status(500).json({ error: 'Error verificando dato sensible.' });
   }
-});
-
-/**
- * GET /api/auth/demo-cuentas
- * Lista de cuentas demo disponibles para probar los 6 roles RBAC en la pantalla de Login.
- */
-authRouter.get('/demo-cuentas', (_req: Request, res: Response) => {
-  return res.json({
-    password_demo: DEMO_PASSWORD_DEFAULT,
-    cuentas: CUENTAS_DEMO.map((c) => ({
-      nombre: c.nombre,
-      email: c.email,
-      rol: c.rol,
-    })),
-  });
 });
 

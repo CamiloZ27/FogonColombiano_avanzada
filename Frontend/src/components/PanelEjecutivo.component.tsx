@@ -154,7 +154,7 @@ export const PanelEjecutivo: React.FC = () => {
                 <span className={`complexity-badge ${data.integridad.integra_global ? 'badge-logarithmic' : 'badge-linear'}`}>
                   {data.integridad.integra_global ? 'ÍNTEGRA' : 'ALTERADA'}
                 </span>
-                <h3>Integridad Hash Encadenado</h3>
+                <h3>Integridad de Registros</h3>
               </div>
               <p className="bigo-card-desc">
                 Facturas verificadas: <strong>{data.integridad.facturas_bloques}</strong> (alteradas:{' '}
@@ -173,18 +173,18 @@ export const PanelEjecutivo: React.FC = () => {
               <p className="bigo-card-desc">
                 {data.ultimo_reporte_calidad
                   ? `Última auditoría: ${data.ultimo_reporte_calidad.total_registros} registros · ${data.ultimo_reporte_calidad.duplicados_detectados} duplicados · ${data.ultimo_reporte_calidad.registros_rechazados} inválidos.`
-                  : 'Aún no se ha ejecutado una auditoría formal desde la pestaña Integridad & Calidad.'}
+                  : 'Aún no se ha ejecutado una auditoría desde Integridad & Calidad.'}
               </p>
             </div>
 
             <div className="bigo-card">
               <div className="bigo-card-head">
-                <span className="complexity-badge badge-logarithmic">KERAS / TF</span>
-                <h3>Modelos IA No-LLM</h3>
+                <span className="complexity-badge badge-logarithmic">ACTIVO</span>
+                <h3>Análisis Inteligente</h3>
               </div>
               <p className="bigo-card-desc">
                 {data.modelos_ia.modelos.filter((m) => m.guardado_en_disco).length} / {data.modelos_ia.modelos.length}{' '}
-                modelos guardados en disco (Fraude, Monto Esperado, Demanda) + Simple Statistics activo.
+                modelos predictivos entrenados (fraude, monto esperado y demanda).
               </p>
             </div>
           </div>
@@ -192,7 +192,7 @@ export const PanelEjecutivo: React.FC = () => {
           {/* Ranking de ítems más vendidos y canales */}
           <div className="grid-two">
             <div>
-              <h3 className="section-subtitle">Top Ítems Más Vendidos (O(n) + O(k log k))</h3>
+              <h3 className="section-subtitle">Platos Más Vendidos</h3>
               <table className="bigo-table">
                 <thead>
                   <tr>

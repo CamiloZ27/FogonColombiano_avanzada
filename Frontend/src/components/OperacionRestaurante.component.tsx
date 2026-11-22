@@ -340,10 +340,10 @@ export const OperacionRestaurante: React.FC = () => {
   return (
     <section>
       <div className="panel-heading">
-        <h1>Módulos Operativos · Fogón Colombiano</h1>
+        <h1>Operación del Restaurante</h1>
         <p>
-          Gestión integral persistida en PostgreSQL: categorías, ítems con inventario, pedidos multi-ítem por canal con
-          descuento automático de stock, facturación consecutiva con hash encadenado y pagos con comprobante e IA.
+          Gestión de categorías, catálogo con inventario, pedidos por canal con control automático de stock,
+          facturación y pagos con comprobante.
         </p>
       </div>
 
@@ -356,7 +356,7 @@ export const OperacionRestaurante: React.FC = () => {
         </button>
         {puedeVerFacturas && (
           <button className={`modal-filter-btn ${tab === 'facturas' ? 'active' : ''}`} onClick={() => setTab('facturas')}>
-            Facturación Encadenada ({facturas.length})
+            Facturación ({facturas.length})
           </button>
         )}
         {puedeVerPagos && (
@@ -395,7 +395,7 @@ export const OperacionRestaurante: React.FC = () => {
                       <option value="domicilio">Domicilio</option>
                     </select>
                   </div>
-                  <div className="field" style={{ flex: 2 }}>
+                  <div className="field field-wide">
                     <label>Agregar Plato del Catálogo</label>
                     <select value={itemElegido} onChange={(e) => setItemElegido(e.target.value)}>
                       {items
@@ -416,9 +416,9 @@ export const OperacionRestaurante: React.FC = () => {
                       onChange={(e) => setCantElegida(Math.max(1, Number(e.target.value)))}
                     />
                   </div>
-                  <div className="field" style={{ justifyContent: 'flex-end' }}>
+                  <div className="field">
                     <label>&nbsp;</label>
-                    <button type="button" className="btn btn-ghost" onClick={agregarAlCarrito}>
+                    <button type="button" className="btn btn-ghost" style={{ height: '40px', width: '100%' }} onClick={agregarAlCarrito}>
                       + Añadir ítem
                     </button>
                   </div>
@@ -552,67 +552,92 @@ export const OperacionRestaurante: React.FC = () => {
       {tab === 'catalogo' && (
         <>
           {puedeCrudCatalogo && (
-            <div className="grid-two" style={{ marginBottom: '1.5rem' }}>
-              <div className="add-order-box">
+            <div className="grid-two" style={{ marginBottom: '1.5rem', gap: '1.25rem', alignItems: 'start' }}>
+              <div className="add-order-box" style={{ marginBottom: 0 }}>
                 <h2 className="add-order-title">Nueva Categoría</h2>
-                <form className="add-order-form" onSubmit={handleCrearCategoria} style={{ display: 'grid', gap: '0.7rem' }}>
-                  <input
-                    placeholder="Nombre (se normaliza automáticamente)"
-                    value={catNombre}
-                    onChange={(e) => setCatNombre(e.target.value)}
-                    required
-                  />
-                  <input
-                    placeholder="Descripción breve"
-                    value={catDesc}
-                    onChange={(e) => setCatDesc(e.target.value)}
-                  />
-                  <button className="btn btn-accent" type="submit">
-                    Guardar Categoría
-                  </button>
-                </form>
-              </div>
-
-              <div className="add-order-box">
-                <h2 className="add-order-title">Nuevo Ítem / Plato</h2>
-                <form className="add-order-form" onSubmit={handleCrearItem} style={{ display: 'grid', gap: '0.7rem' }}>
-                  <select value={itemCatId} onChange={(e) => setItemCatId(e.target.value)} required>
-                    {categorias.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.nombre}
-                      </option>
-                    ))}
-                  </select>
-                  <input
-                    placeholder="Nombre del plato o bebida"
-                    value={itemNombre}
-                    onChange={(e) => setItemNombre(e.target.value)}
-                    required
-                  />
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                <form className="add-order-form" onSubmit={handleCrearCategoria} style={{ display: 'grid', gap: '0.85rem' }}>
+                  <div className="field">
+                    <label>Nombre de categoría *</label>
                     <input
-                      placeholder="Precio (ej. 35000 o $ 35.000)"
-                      value={itemPrecio}
-                      onChange={(e) => setItemPrecio(e.target.value)}
-                      required
-                    />
-                    <input
-                      type="number"
-                      min={0}
-                      placeholder="Stock inicial"
-                      value={itemStock}
-                      onChange={(e) => setItemStock(e.target.value)}
+                      placeholder="Ej. Platos Especiales"
+                      value={catNombre}
+                      onChange={(e) => setCatNombre(e.target.value)}
                       required
                     />
                   </div>
-                  <input
-                    placeholder="Descripción"
-                    value={itemDesc}
-                    onChange={(e) => setItemDesc(e.target.value)}
-                  />
-                  <button className="btn btn-accent" type="submit">
-                    Crear Ítem en Catálogo
-                  </button>
+                  <div className="field">
+                    <label>Descripción</label>
+                    <input
+                      placeholder="Descripción breve"
+                      value={catDesc}
+                      onChange={(e) => setCatDesc(e.target.value)}
+                    />
+                  </div>
+                  <div className="form-actions" style={{ marginTop: '0.25rem' }}>
+                    <button className="btn btn-accent" type="submit">
+                      Guardar Categoría
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              <div className="add-order-box" style={{ marginBottom: 0 }}>
+                <h2 className="add-order-title">Nuevo Ítem / Plato</h2>
+                <form className="add-order-form" onSubmit={handleCrearItem} style={{ display: 'grid', gap: '0.85rem' }}>
+                  <div className="field">
+                    <label>Categoría *</label>
+                    <select value={itemCatId} onChange={(e) => setItemCatId(e.target.value)} required>
+                      {categorias.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.nombre}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="field">
+                    <label>Nombre del plato o bebida *</label>
+                    <input
+                      placeholder="Ej. Mojarra Frita del Pacífico"
+                      value={itemNombre}
+                      onChange={(e) => setItemNombre(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                    <div className="field">
+                      <label>Precio (COP) *</label>
+                      <input
+                        placeholder="Ej. 35000"
+                        value={itemPrecio}
+                        onChange={(e) => setItemPrecio(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="field">
+                      <label>Stock inicial *</label>
+                      <input
+                        type="number"
+                        min={0}
+                        placeholder="30"
+                        value={itemStock}
+                        onChange={(e) => setItemStock(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div className="field">
+                    <label>Descripción</label>
+                    <input
+                      placeholder="Ingredientes o acompañamiento"
+                      value={itemDesc}
+                      onChange={(e) => setItemDesc(e.target.value)}
+                    />
+                  </div>
+                  <div className="form-actions" style={{ marginTop: '0.25rem' }}>
+                    <button className="btn btn-accent" type="submit">
+                      Crear Ítem en Catálogo
+                    </button>
+                  </div>
                 </form>
               </div>
             </div>
@@ -670,28 +695,38 @@ export const OperacionRestaurante: React.FC = () => {
         <>
           {puedeCrearFacturas && (
             <div className="add-order-box" style={{ marginBottom: '1.5rem' }}>
-              <h2 className="add-order-title">Emitir Factura Consecutiva con Hash Encadenado</h2>
-              <form className="form-row" onSubmit={handleEmitirFactura} style={{ marginBottom: 0 }}>
-                <select value={pedidoAFacturar} onChange={(e) => setPedidoAFacturar(e.target.value)} required>
-                  <option value="">Selecciona un pedido pendiente de facturar...</option>
-                  {pedidosSinFactura.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      Pedido #{p.id} · {p.cliente_nombre} · {fmtCOP(p.subtotal)} ({p.canal})
-                    </option>
-                  ))}
-                </select>
-                <input
-                  type="number"
-                  min={0}
-                  max={80}
-                  value={descuentoPct}
-                  onChange={(e) => setDescuentoPct(e.target.value)}
-                  placeholder="Descuento %"
-                  style={{ maxWidth: '150px' }}
-                />
-                <button className="btn btn-accent" type="submit" disabled={!pedidoAFacturar}>
-                  Generar Factura + Sello Hash
-                </button>
+              <h2 className="add-order-title">Emitir Factura</h2>
+              <form className="add-order-form" onSubmit={handleEmitirFactura}>
+                <div className="form-grid-inputs">
+                  <div className="field field-wide">
+                    <label>Pedido pendiente de facturar *</label>
+                    <select value={pedidoAFacturar} onChange={(e) => setPedidoAFacturar(e.target.value)} required>
+                      <option value="">Selecciona un pedido...</option>
+                      {pedidosSinFactura.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          Pedido #{p.id} · {p.cliente_nombre} · {fmtCOP(p.subtotal)} ({p.canal})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="field">
+                    <label>Descuento (%)</label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={80}
+                      value={descuentoPct}
+                      onChange={(e) => setDescuentoPct(e.target.value)}
+                      placeholder="0"
+                    />
+                  </div>
+                  <div className="field">
+                    <label>&nbsp;</label>
+                    <button className="btn btn-accent" type="submit" style={{ height: '40px', width: '100%' }} disabled={!pedidoAFacturar}>
+                      Generar Factura
+                    </button>
+                  </div>
+                </div>
               </form>
             </div>
           )}
@@ -705,7 +740,7 @@ export const OperacionRestaurante: React.FC = () => {
                   <th>Subtotal / INC / Desc.</th>
                   <th>Total</th>
                   <th>Estado</th>
-                  <th>Hash Encadenado (HMAC-SHA256)</th>
+                  <th>Código de Integridad</th>
                 </tr>
               </thead>
               <tbody>
@@ -748,11 +783,11 @@ export const OperacionRestaurante: React.FC = () => {
         <>
           {puedeCrearPagos && (
             <div className="add-order-box" style={{ marginBottom: '1.5rem' }}>
-              <h2 className="add-order-title">Procesar Pago con Comprobante + Evaluación IA Keras</h2>
-              <form className="add-order-form" onSubmit={handleProcesarPago} style={{ display: 'grid', gap: '0.8rem' }}>
+              <h2 className="add-order-title">Procesar Pago con Comprobante</h2>
+              <form className="add-order-form" onSubmit={handleProcesarPago} style={{ display: 'grid', gap: '0.9rem' }}>
                 <div className="form-grid-inputs">
-                  <div className="field" style={{ flex: 2 }}>
-                    <label>Factura pendiente</label>
+                  <div className="field field-wide">
+                    <label>Factura pendiente *</label>
                     <select value={facturaAPagar} onChange={(e) => setFacturaAPagar(e.target.value)} required>
                       <option value="">Selecciona factura...</option>
                       {facturasPendientes.map((f) => (
@@ -777,16 +812,20 @@ export const OperacionRestaurante: React.FC = () => {
                     <label>Referencia</label>
                     <input value={refPago} onChange={(e) => setRefPago(e.target.value)} placeholder="Ej. NEQ-984512" />
                   </div>
-                </div>
-                <div className="form-row" style={{ marginBottom: 0, alignItems: 'center' }}>
-                  <input type="file" onChange={handleArchivoComprobante} accept="image/*,.pdf,.txt" />
-                  <button className="btn btn-accent" type="submit" disabled={!facturaAPagar}>
-                    Registrar Pago + Sellar Comprobante (SHA-256)
-                  </button>
+                  <div className="field field-wide">
+                    <label>Comprobante de pago (opcional)</label>
+                    <input type="file" onChange={handleArchivoComprobante} accept="image/*,.pdf,.txt" />
+                  </div>
+                  <div className="field">
+                    <label>&nbsp;</label>
+                    <button className="btn btn-accent" type="submit" style={{ height: '40px', width: '100%' }} disabled={!facturaAPagar}>
+                      Registrar Pago
+                    </button>
+                  </div>
                 </div>
                 {compNombre && (
                   <small style={{ color: 'var(--accent-soft)' }}>
-                    📎 Comprobante adjunto: <strong>{compNombre}</strong> (se sellará con SHA-256 en el servidor).
+                    📎 Comprobante adjunto: <strong>{compNombre}</strong>
                   </small>
                 )}
               </form>
@@ -799,9 +838,9 @@ export const OperacionRestaurante: React.FC = () => {
                 <tr>
                   <th>Pago / Factura</th>
                   <th>Método &amp; Monto</th>
-                  <th>Comprobante (SHA-256)</th>
-                  <th>Veredicto IA Keras</th>
-                  <th>Hash Encadenado</th>
+                  <th>Comprobante</th>
+                  <th>Evaluación de Riesgo</th>
+                  <th>Código de Seguridad</th>
                 </tr>
               </thead>
               <tbody>

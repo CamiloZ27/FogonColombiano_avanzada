@@ -297,274 +297,192 @@ export const FormularioTransaccionUsuario: React.FC = () => {
   };
 
   return (
-    <div className="trace-box" style={{ maxWidth: '780px', margin: '0 auto' }}>
-      <div className="panel-heading" style={{ marginBottom: '1.2rem' }}>
-        <h2 className="formulario-titulo" style={{ margin: 0 }}>
-          Registro de Transacciones con Detección de Anomalías
-        </h2>
+    <section>
+      <div className="panel-heading">
+        <h1>Registro de Transacciones</h1>
+        <p>Registra pagos directos, genera comprobante oficial y evalúa automáticamente posibles anomalías.</p>
       </div>
 
-      {mensaje.texto && (
-        <div
-          className={`mensaje ${
-            mensaje.tipo === 'exito'
-              ? 'mensaje-exito'
-              : mensaje.tipo === 'alerta'
-              ? 'order-card-not-found'
-              : 'mensaje-error'
-          }`}
-          style={{
-            marginBottom: '1.25rem',
-            padding: '1rem',
-            borderRadius: '8px',
-            backgroundColor:
-              mensaje.tipo === 'alerta' ? 'rgba(217, 119, 6, 0.15)' : undefined,
-            border:
-              mensaje.tipo === 'alerta' ? '1px solid #d97706' : undefined,
-          }}
-        >
-          <strong>{mensaje.texto}</strong>
-          {mensaje.detalle && (
-            <p style={{ margin: '0.4rem 0 0', fontSize: '0.88rem' }}>{mensaje.detalle}</p>
-          )}
-          {ultimoSoporte && (
-            <div style={{ marginTop: '0.8rem' }}>
-              <button
-                type="button"
-                onClick={() => setSoportePago(ultimoSoporte)}
-                className="btn btn-accent"
-                style={{
-                  fontSize: '0.84rem',
-                  padding: '0.45rem 1rem',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                }}
-              >
-                🧾 Ver Soporte de Pago / Factura Oficial
-              </button>
+      <div className="add-order-box">
+        {mensaje.texto && (
+          <div
+            className={`mensaje ${
+              mensaje.tipo === 'exito'
+                ? 'alert-success'
+                : mensaje.tipo === 'alerta'
+                ? 'order-card-not-found'
+                : 'order-card-not-found'
+            }`}
+            style={{
+              marginBottom: '1.25rem',
+              marginTop: 0,
+              borderColor: mensaje.tipo === 'alerta' ? '#d97706' : undefined,
+            }}
+          >
+            <div>
+              <strong>{mensaje.texto}</strong>
+              {mensaje.detalle && (
+                <p style={{ margin: '0.35rem 0 0', fontSize: '0.84rem' }}>{mensaje.detalle}</p>
+              )}
+              {ultimoSoporte && (
+                <div style={{ marginTop: '0.75rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => setSoportePago(ultimoSoporte)}
+                    className="btn btn-accent btn-sm"
+                  >
+                    🧾 Ver Soporte de Pago
+                  </button>
+                </div>
+              )}
             </div>
-          )}
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '1.2rem' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-          <div className="formulario-campo" style={{ display: 'grid', gap: '0.4rem' }}>
-            <label htmlFor="usuario_nombre">Nombre del Cliente *</label>
-            <input
-              id="usuario_nombre"
-              type="text"
-              name="usuario_nombre"
-              value={formData.usuario_nombre}
-              onChange={handleChange}
-              required
-              className="formulario-input"
-              style={{
-                width: '100%',
-                boxSizing: 'border-box',
-                padding: '0.75rem',
-                border: '1px solid #d6b477',
-                borderRadius: '8px',
-                backgroundColor: '#fffdf8',
-                color: '#4a2412',
-              }}
-            />
           </div>
+        )}
 
-          <div className="formulario-campo" style={{ display: 'grid', gap: '0.4rem' }}>
-            <label htmlFor="usuario_email">Correo Electrónico (user) *</label>
-            <input
-              id="usuario_email"
-              type="email"
-              name="usuario_email"
-              value={formData.usuario_email}
-              onChange={handleChange}
-              required
-              className="formulario-input"
-              style={{
-                width: '100%',
-                boxSizing: 'border-box',
-                padding: '0.75rem',
-                border: '1px solid #d6b477',
-                borderRadius: '8px',
-                backgroundColor: '#fffdf8',
-                color: '#4a2412',
-              }}
-            />
-          </div>
-        </div>
+        <form onSubmit={handleSubmit} className="add-order-form" style={{ marginTop: 0, paddingTop: 0, borderTop: 'none', display: 'grid', gap: '1.1rem' }}>
+          <div className="form-grid-inputs">
+            <div className="field">
+              <label htmlFor="usuario_nombre">Nombre del Cliente *</label>
+              <input
+                id="usuario_nombre"
+                type="text"
+                name="usuario_nombre"
+                value={formData.usuario_nombre}
+                onChange={handleChange}
+                required
+              />
+            </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
-          <div className="formulario-campo" style={{ display: 'grid', gap: '0.4rem' }}>
-            <label htmlFor="valor">Monto / Valor ($ COP) *</label>
-            <input
-              id="valor"
-              type="number"
-              step="100"
-              name="valor"
-              value={formData.valor}
-              onChange={handleChange}
-              required
-              className="formulario-input"
-              style={{
-                width: '100%',
-                boxSizing: 'border-box',
-                padding: '0.75rem',
-                border: '1px solid #d6b477',
-                borderRadius: '8px',
-                backgroundColor: '#fffdf8',
-                color: '#4a2412',
-              }}
-            />
-          </div>
+            <div className="field">
+              <label htmlFor="usuario_email">Correo Electrónico *</label>
+              <input
+                id="usuario_email"
+                type="email"
+                name="usuario_email"
+                value={formData.usuario_email}
+                onChange={handleChange}
+                required
+              />
+            </div>
 
-          <div className="formulario-campo" style={{ display: 'grid', gap: '0.4rem' }}>
-            <label htmlFor="fecha_txn">Fecha y Hora (date) *</label>
-            <input
-              id="fecha_txn"
-              type="datetime-local"
-              name="fecha_txn"
-              value={formData.fecha_txn.slice(0, 16)}
-              onChange={handleChange}
-              required
-              className="formulario-input"
-              style={{
-                width: '100%',
-                boxSizing: 'border-box',
-                padding: '0.75rem',
-                border: '1px solid #d6b477',
-                borderRadius: '8px',
-                backgroundColor: '#fffdf8',
-                color: '#4a2412',
-              }}
-            />
-          </div>
+            <div className="field">
+              <label htmlFor="valor">Monto ($ COP) *</label>
+              <input
+                id="valor"
+                type="number"
+                step="100"
+                name="valor"
+                value={formData.valor}
+                onChange={handleChange}
+                required
+              />
+            </div>
 
-          <div className="formulario-campo" style={{ display: 'grid', gap: '0.4rem' }}>
-            <label htmlFor="metodo_pago">Método de Pago</label>
-            <select
-              id="metodo_pago"
-              name="metodo_pago"
-              value={formData.metodo_pago}
-              onChange={handleChange}
-              className="formulario-input"
-              style={{
-                width: '100%',
-                boxSizing: 'border-box',
-                padding: '0.75rem',
-                border: '1px solid #d6b477',
-                borderRadius: '8px',
-                backgroundColor: '#fffdf8',
-                color: '#4a2412',
-              }}
-            >
-              <option value="Tarjeta">Tarjeta</option>
-              <option value="tarjeta_credito">Tarjeta de Crédito</option>
-              <option value="tarjeta_debito">Tarjeta de Débito</option>
-              <option value="transferencia">Transferencia Bancaria</option>
-              <option value="nequi">Nequi</option>
-              <option value="daviplata">Daviplata</option>
-              <option value="efectivo">Efectivo</option>
-            </select>
-          </div>
-        </div>
+            <div className="field">
+              <label htmlFor="fecha_txn">Fecha y Hora *</label>
+              <input
+                id="fecha_txn"
+                type="datetime-local"
+                name="fecha_txn"
+                value={formData.fecha_txn.slice(0, 16)}
+                onChange={handleChange}
+                required
+              />
+            </div>
 
-        {/* Panel de Criptografía & Hash en Tiempo Real (Slide 14 a 19) */}
-        <div
-          style={{
-            padding: '1rem',
-            borderRadius: '8px',
-            backgroundColor: '#f8f4eb',
-            border: '1px dashed #d6b477',
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontWeight: 600, color: '#4a2412', fontSize: '0.92rem' }}>
-              🔐 Hash Criptográfico Calculado (HMAC-SHA256):
-            </span>
-            <span
-              style={{
-                fontSize: '0.78rem',
-                padding: '2px 8px',
-                borderRadius: '4px',
-                backgroundColor: formData.alterarHash ? '#ef4444' : '#10b981',
-                color: '#fff',
-                fontWeight: 600,
-              }}
-            >
-              {formData.alterarHash ? 'HASH ALTERADO (TEST)' : 'INTEGRIDAD VÁLIDA'}
-            </span>
+            <div className="field">
+              <label htmlFor="metodo_pago">Método de Pago</label>
+              <select
+                id="metodo_pago"
+                name="metodo_pago"
+                value={formData.metodo_pago}
+                onChange={handleChange}
+              >
+                <option value="Tarjeta">Tarjeta</option>
+                <option value="tarjeta_credito">Tarjeta de Crédito</option>
+                <option value="tarjeta_debito">Tarjeta de Débito</option>
+                <option value="transferencia">Transferencia Bancaria</option>
+                <option value="nequi">Nequi</option>
+                <option value="daviplata">Daviplata</option>
+                <option value="efectivo">Efectivo</option>
+              </select>
+            </div>
           </div>
 
           <div
             style={{
-              marginTop: '0.4rem',
-              fontFamily: 'monospace',
-              fontSize: '0.82rem',
-              wordBreak: 'break-all',
-              backgroundColor: '#fff',
-              padding: '0.6rem',
-              borderRadius: '6px',
-              border: '1px solid #e0d5c1',
-              color: formData.alterarHash ? '#dc2626' : '#2b5329',
+              padding: '0.9rem 1rem',
+              borderRadius: '8px',
+              backgroundColor: 'var(--bg)',
+              border: '1px dashed var(--rule)',
             }}
           >
-            {formData.alterarHash
-              ? '0000deadbeef' + hashCalculado.slice(12) + ' (Simulación de datos alterados)'
-              : hashCalculado || 'Completando datos para generar hash...'}
-          </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <span style={{ fontWeight: 600, color: 'var(--paper)', fontSize: '0.86rem' }}>
+                Código de verificación de integridad
+              </span>
+              <span
+                className={`order-status-badge ${formData.alterarHash ? 'status-solicitado' : 'status-entregado'}`}
+              >
+                {formData.alterarHash ? 'Alterado (Prueba)' : 'Válido'}
+              </span>
+            </div>
 
-          <div style={{ marginTop: '0.6rem' }}>
-            <label
+            <div
               style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                fontSize: '0.86rem',
-                cursor: 'pointer',
-                color: '#8b4513',
+                marginTop: '0.45rem',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '0.76rem',
+                wordBreak: 'break-all',
+                color: formData.alterarHash ? '#f18f82' : '#8cb88a',
               }}
             >
-              <input
-                type="checkbox"
-                name="alterarHash"
-                checked={formData.alterarHash}
-                onChange={handleChange}
-              />
-              <strong>Simular alteración de datos / Hash no coincidente</strong> (para probar el rechazo 401 de Slide 16 y 18)
-            </label>
+              {formData.alterarHash
+                ? '0000deadbeef' + hashCalculado.slice(12)
+                : hashCalculado || 'Completa los datos para generar el código...'}
+            </div>
+
+            <div style={{ marginTop: '0.6rem' }}>
+              <label
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  fontSize: '0.82rem',
+                  cursor: 'pointer',
+                  color: '#C9AD8F',
+                }}
+              >
+                <input
+                  type="checkbox"
+                  name="alterarHash"
+                  checked={formData.alterarHash}
+                  onChange={handleChange}
+                />
+                Simular alteración de datos en la transacción
+              </label>
+            </div>
           </div>
-        </div>
 
-        {/* Botones de acción */}
-        <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
-          <button
-            type="submit"
-            disabled={cargando || simulandoRafaga}
-            className="btn btn-accent"
-            style={{ flex: 1, minWidth: '220px', padding: '0.8rem' }}
-          >
-            {cargando ? 'Procesando...' : 'Enviar Transacción'}
-          </button>
-
-          <button
-            type="button"
-            disabled={cargando || simulandoRafaga}
-            onClick={handleSimularRafaga}
-            className="btn btn-ghost"
-            style={{
-              padding: '0.8rem 1.2rem',
-              border: '1px solid #d97706',
-              color: '#d97706',
-              fontWeight: 600,
-            }}
-            title="Envía 3 transacciones seguidas para el usuario para disparar la alerta de ventana deslizante"
-          >
-            {simulandoRafaga ? 'Enviando ráfaga...' : '⚡ Probar Ráfaga (< 3s)'}
-          </button>
-        </div>
-      </form>
+          <div className="form-actions" style={{ marginTop: 0 }}>
+            <button
+              type="button"
+              disabled={cargando || simulandoRafaga}
+              onClick={handleSimularRafaga}
+              className="btn btn-ghost"
+            >
+              {simulandoRafaga ? 'Enviando ráfaga...' : '⚡ Probar Ráfaga (< 3s)'}
+            </button>
+            <button
+              type="submit"
+              disabled={cargando || simulandoRafaga}
+              className="btn btn-accent"
+            >
+              {cargando ? 'Procesando...' : 'Enviar Transacción'}
+            </button>
+          </div>
+        </form>
+      </div>
 
       {/* Modal con el Soporte Oficial de Pago para Restaurante */}
       {soportePago && (
@@ -573,6 +491,6 @@ export const FormularioTransaccionUsuario: React.FC = () => {
           onCerrar={() => setSoportePago(null)}
         />
       )}
-    </div>
+    </section>
   );
 };

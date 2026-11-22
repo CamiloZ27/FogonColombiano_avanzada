@@ -365,7 +365,7 @@ analiticaRouter.post('/ia/entrenar-todo', requerirPermiso('ia:entrenar'), async 
     });
 
     return res.json({
-      mensaje: 'Los 3 modelos Keras/TensorFlow fueron entrenados con normalización, aumento de datos y guardados en disco.',
+      mensaje: 'Los modelos predictivos fueron actualizados correctamente.',
       clasificador_fraude: fraude,
       regresor_monto: monto,
       predictor_demanda: demanda.modelo,

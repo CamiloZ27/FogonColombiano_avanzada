@@ -43,19 +43,19 @@ interface NavItemDef {
 const NAV_ITEMS: NavItemDef[] = [
   { id: "panel", label: "Panel Ejecutivo", grupo: "Plataforma Integral", permiso: "panel:ver" },
   { id: "operacion", label: "Operación & POS", grupo: "Plataforma Integral", permiso: "catalogo:ver" },
-  { id: "admin", label: "Administración RBAC", grupo: "Plataforma Integral", roles: ["admin", "gerente"] },
+  { id: "admin", label: "Administración", grupo: "Plataforma Integral", roles: ["admin", "gerente"] },
 
-  { id: "cola", label: "Cola de clientes (FIFO)", grupo: "Operación & Estructuras", permiso: "pedidos:ver" },
-  { id: "operaciones", label: "Pila de operaciones", grupo: "Operación & Estructuras", permiso: "pedidos:ver" },
-  { id: "rutas", label: "Rutas & entregas (Grafo)", grupo: "Operación & Estructuras", permiso: "pedidos:ver" },
-  { id: "transaccion", label: "Transacciones & HMAC", grupo: "Operación & Estructuras", permiso: "transacciones:crear" },
+  { id: "cola", label: "Cola de clientes", grupo: "Operación & Estructuras", permiso: "pedidos:ver" },
+  { id: "operaciones", label: "Operaciones recientes", grupo: "Operación & Estructuras", permiso: "pedidos:ver" },
+  { id: "rutas", label: "Rutas & entregas", grupo: "Operación & Estructuras", permiso: "pedidos:ver" },
+  { id: "transaccion", label: "Registro de transacciones", grupo: "Operación & Estructuras", permiso: "transacciones:crear" },
 
   { id: "algoritmos", label: "Algoritmos & Benchmark", grupo: "Analítica, Seguridad e IA", permiso: "algoritmos:ver" },
-  { id: "busqueda", label: "Búsqueda Big O", grupo: "Analítica, Seguridad e IA", permiso: "algoritmos:ver" },
+  { id: "busqueda", label: "Búsqueda de pedidos", grupo: "Analítica, Seguridad e IA", permiso: "algoritmos:ver" },
   { id: "integridad", label: "Integridad & Calidad", grupo: "Analítica, Seguridad e IA", permiso: "integridad:ver" },
-  { id: "anomalias", label: "Anomalías (Ventana)", grupo: "Analítica, Seguridad e IA", permiso: "anomalias:ver" },
-  { id: "ia", label: "IA Keras & Estadística", grupo: "Analítica, Seguridad e IA", permiso: "ia:ver" },
-  { id: "prediccion", label: "Predicción de Ventas", grupo: "Analítica, Seguridad e IA", permiso: "ia:ver" },
+  { id: "anomalias", label: "Anomalías", grupo: "Analítica, Seguridad e IA", permiso: "anomalias:ver" },
+  { id: "ia", label: "Inteligencia Artificial", grupo: "Analítica, Seguridad e IA", permiso: "ia:ver" },
+  { id: "prediccion", label: "Predicción de ventas", grupo: "Analítica, Seguridad e IA", permiso: "ia:ver" },
 ];
 
 function now(): string {
@@ -101,7 +101,7 @@ function AppShellAutenticada() {
   if (cargando) {
     return (
       <div style={{ minHeight: "100vh", display: "grid", placeItems: "center" }}>
-        <div className="empty-state">Verificando sesión JWT Bearer…</div>
+        <div className="empty-state">Verificando sesión…</div>
       </div>
     );
   }
@@ -195,7 +195,7 @@ function AppShellAutenticada() {
         </nav>
 
         <div className="sidebar-foot">
-          Sesión protegida con <strong>JWT Bearer</strong> &amp; <strong>bcrypt</strong>.
+          Fogón Colombiano · Sistema de gestión
         </div>
       </aside>
 

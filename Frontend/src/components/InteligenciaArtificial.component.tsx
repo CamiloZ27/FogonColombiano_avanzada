@@ -178,33 +178,38 @@ export const InteligenciaArtificial: React.FC = () => {
     }
   }
 
+  const NOMBRES_MODELO: Record<string, string> = {
+    'fraud-classifier': 'Clasificador de Fraude',
+    'amount-regressor': 'Estimación de Monto Esperado',
+    'demand-predictor': 'Pronóstico de Demanda',
+  };
+
   return (
     <section>
       <div className="panel-heading" style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1>Inteligencia Artificial No-LLM · Keras/TensorFlow &amp; Simple Statistics</h1>
+          <h1>Inteligencia Artificial &amp; Análisis Predictivo</h1>
           <p>
-            Clasificación de operaciones (<strong>normal vs fraudulenta</strong>), regresión de monto esperado,
-            normalización + aumento de datos + guardado/carga en disco en <strong>TensorFlow/Keras</strong>, y perfil
-            estadístico de anomalías con cuartiles y regresión lineal en <strong>Simple Statistics</strong>.
+            Clasificación automática de operaciones (<strong>normal vs fraudulenta</strong>), estimación de monto
+            esperado, detección de anomalías por usuario y pronóstico de demanda.
           </p>
         </div>
         {puedeEntrenar && (
           <button className="btn btn-accent" onClick={entrenarTodosLosModelos} disabled={entrenando}>
-            {entrenando ? '🧠 Entrenando redes Keras/TF…' : '🧠 Entrenar & Guardar 3 Modelos Keras'}
+            {entrenando ? 'Actualizando modelos…' : 'Actualizar Modelos Predictivos'}
           </button>
         )}
       </div>
 
       <div className="scenarios-buttons" style={{ marginBottom: '1.5rem' }}>
         <button className={`modal-filter-btn ${tab === 'keras' ? 'active' : ''}`} onClick={() => setTab('keras')}>
-          🧠 Keras / TensorFlow (Fraude &amp; Monto)
+          Detección de Fraude &amp; Monto
         </button>
         <button className={`modal-filter-btn ${tab === 'estadistica' ? 'active' : ''}`} onClick={() => setTab('estadistica')}>
-          📊 Anomalías por Usuario (Simple Statistics)
+          Anomalías por Usuario
         </button>
         <button className={`modal-filter-btn ${tab === 'regresion' ? 'active' : ''}`} onClick={() => setTab('regresion')}>
-          📈 Regresión Lineal Demanda (Simple Statistics)
+          Tendencia de Demanda
         </button>
       </div>
 
@@ -216,7 +221,7 @@ export const InteligenciaArtificial: React.FC = () => {
         </div>
       )}
 
-      {/* TAB 1: KERAS / TENSORFLOW */}
+      {/* TAB 1: FRAUDE Y MONTO ESPERADO */}
       {tab === 'keras' && (
         <>
           <div className="bigo-cards-grid" style={{ marginBottom: '1.5rem' }}>
@@ -224,18 +229,20 @@ export const InteligenciaArtificial: React.FC = () => {
               <div className="bigo-card" key={m.nombre}>
                 <div className="bigo-card-head">
                   <span className={`complexity-badge ${m.guardado_en_disco ? 'badge-logarithmic' : 'badge-linear'}`}>
-                    {m.guardado_en_disco ? 'EN DISCO' : 'PENDIENTE'}
+                    {m.guardado_en_disco ? 'ACTIVO' : 'PENDIENTE'}
                   </span>
-                  <h3>{m.nombre}</h3>
+                  <h3>{NOMBRES_MODELO[m.nombre] ?? m.nombre}</h3>
                 </div>
-                <p className="bigo-card-desc" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>
-                  {m.ruta ?? 'Aún no guardado — presiona Entrenar o clasifica una operación.'}
+                <p className="bigo-card-desc">
+                  {m.entrenado_en
+                    ? `Última actualización: ${new Date(m.entrenado_en).toLocaleString('es-CO')}`
+                    : 'Pendiente de entrenamiento inicial.'}
                 </p>
                 <div className="bigo-card-footer" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '0.2rem' }}>
-                  <span>Muestras: <strong>{m.muestras_originales}</strong> orig. → <strong>{m.muestras_con_aumento}</strong> con aumento</span>
+                  <span>Registros analizados: <strong>{m.muestras_con_aumento}</strong></span>
                   {m.metricas && (
                     <span>
-                      Métricas:{' '}
+                      Precisión / Métricas:{' '}
                       <strong>
                         {Object.entries(m.metricas)
                           .map(([k, v]) => `${k}=${v}`)
@@ -249,9 +256,9 @@ export const InteligenciaArtificial: React.FC = () => {
           </div>
 
           <div className="add-order-box">
-            <h2 className="add-order-title">Simulador de Clasificador de Fraude &amp; Regresión de Monto (Keras)</h2>
+            <h2 className="add-order-title">Evaluador de Operaciones Sospechosas</h2>
             <p className="add-order-subtitle">
-              Evalúa en tiempo real cualquier operación con el modelo neuronal guardado en disco.
+              Analiza una operación en tiempo real para clasificarla como normal o fraudulenta y estimar su monto esperado.
             </p>
             <form className="add-order-form" onSubmit={evaluarOperacionIA}>
               <div className="form-grid-inputs">
@@ -288,7 +295,7 @@ export const InteligenciaArtificial: React.FC = () => {
                   </select>
                 </div>
                 <div className="field">
-                  <label>Frecuencia en ventana</label>
+                  <label>Frecuencia reciente</label>
                   <input type="number" min={1} value={frecuencia} onChange={(e) => setFrecuencia(e.target.value)} />
                 </div>
                 <div className="field">
@@ -296,16 +303,16 @@ export const InteligenciaArtificial: React.FC = () => {
                   <input type="number" min={0} max={90} value={descuentoPct} onChange={(e) => setDescuentoPct(e.target.value)} />
                 </div>
                 <div className="field">
-                  <label>Firma criptográfica</label>
+                  <label>Validación de firma</label>
                   <select value={firmaValida ? '1' : '0'} onChange={(e) => setFirmaValida(e.target.value === '1')}>
-                    <option value="1">Válida (1)</option>
-                    <option value="0">Alterada / Inválida (0)</option>
+                    <option value="1">Válida</option>
+                    <option value="0">Inválida / Alterada</option>
                   </select>
                 </div>
               </div>
               <div className="form-actions" style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
                 <button className="btn btn-accent" type="submit">
-                  Ejecutar Inferencia Keras/TF
+                  Evaluar Operación
                 </button>
                 <button
                   type="button"
@@ -353,7 +360,7 @@ export const InteligenciaArtificial: React.FC = () => {
                     >
                       {resultadoFraude.clasificacion.toUpperCase()}
                     </span>
-                    <h3>Veredicto Clasificador Keras</h3>
+                    <h3>Veredicto de Clasificación</h3>
                   </div>
                   <div className="bigo-card-stats">
                     <div className="stat-unit">
@@ -375,7 +382,7 @@ export const InteligenciaArtificial: React.FC = () => {
                 {resultadoMonto && (
                   <div className="bigo-card">
                     <div className="bigo-card-head">
-                      <span className="complexity-badge badge-constant">REGRESIÓN KERAS</span>
+                      <span className="complexity-badge badge-constant">ESTIMACIÓN</span>
                       <h3>Monto Esperado vs Real</h3>
                     </div>
                     <div className="bigo-card-stats">
@@ -408,7 +415,7 @@ export const InteligenciaArtificial: React.FC = () => {
         <>
           {globalesSS && (
             <div className="trace-box" style={{ marginBottom: '1.5rem' }}>
-              <h3 style={{ marginTop: 0 }}>Cuartiles Globales (Simple Statistics)</h3>
+              <h3 style={{ marginTop: 0 }}>Cuartiles Globales de Consumo</h3>
               <div className="stat-grid">
                 <div className="stat"><span className="stat-label">Media</span><span className="stat-value">{fmtCOP(globalesSS.media_global)}</span></div>
                 <div className="stat"><span className="stat-label">Q1 (25%)</span><span className="stat-value">{fmtCOP(globalesSS.q1_global)}</span></div>

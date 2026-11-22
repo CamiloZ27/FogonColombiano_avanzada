@@ -65,14 +65,14 @@ export async function autenticarJWT(req: Request, res: Response, next: NextFunct
     const token = extraerBearerToken(req);
     if (!token) {
       return res.status(401).json({
-        error: 'Autenticación requerida: proporcione un Bearer Token en el encabezado Authorization.',
+        error: 'Autenticación requerida. Inicie sesión para continuar.',
       });
     }
 
     const payload = verificarTokenJWT(token);
     if (!payload) {
       return res.status(401).json({
-        error: 'Token JWT inválido o expirado. Inicie sesión nuevamente.',
+        error: 'Sesión inválida o expirada. Inicie sesión nuevamente.',
       });
     }
 
@@ -122,7 +122,7 @@ export function requerirRol(...rolesPermitidos: RolCodigo[]) {
     }
     if (!rolesPermitidos.includes(req.usuario.rol)) {
       return res.status(403).json({
-        error: `Acceso denegado (RBAC). Su rol '${req.usuario.rol_nombre}' no tiene autorización. Se requiere: ${rolesPermitidos.join(', ')}.`,
+        error: `Acceso denegado. Su rol '${req.usuario.rol_nombre}' no tiene autorización para esta acción.`,
       });
     }
     return next();
@@ -140,7 +140,7 @@ export function requerirPermiso(...permisosRequeridos: PermisoCodigo[]) {
     const tieneTodos = permisosRequeridos.every((p) => req.usuario!.permisos.includes(p));
     if (!tieneTodos) {
       return res.status(403).json({
-        error: `Acceso denegado (RBAC). Su rol '${req.usuario.rol_nombre}' carece de los permisos: ${permisosRequeridos.join(', ')}.`,
+        error: `Acceso denegado. Su rol '${req.usuario.rol_nombre}' no tiene permiso para realizar esta acción.`,
       });
     }
     return next();

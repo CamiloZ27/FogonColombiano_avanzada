@@ -43,7 +43,7 @@ adminRouter.get('/roles', async (_req: Request, res: Response) => {
 // Bloqueo explícito de mutaciones sobre roles predefinidos
 const rechazarMutacionRoles = (_req: Request, res: Response) =>
   res.status(403).json({
-    error: 'Operación bloqueada: los roles RBAC son predefinidos del sistema y NO son editables, creables ni eliminables.',
+    error: 'Operación no permitida: los roles del sistema son predefinidos y no son editables ni eliminables.',
   });
 
 adminRouter.post('/roles', rechazarMutacionRoles);
@@ -127,7 +127,7 @@ adminRouter.post('/usuarios', requerirPermiso('usuarios:crud'), async (req: Requ
     await registrarAuditoria(req, 'CREAR_USUARIO', `/api/admin/usuarios/${rows[0].id}`, { email, rol: rolCodigo });
 
     return res.status(201).json({
-      mensaje: 'Usuario creado con contraseña y datos sensibles protegidos mediante bcrypt.',
+      mensaje: 'Usuario creado correctamente.',
       usuario: { ...rows[0], rol: rolCodigo },
     });
   } catch (err) {

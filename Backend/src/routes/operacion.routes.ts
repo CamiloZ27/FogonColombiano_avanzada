@@ -828,8 +828,8 @@ operacionRouter.post('/pagos', requerirPermiso('pagos:crear'), async (req: Reque
     return res.status(201).json({
       mensaje:
         evalIA.clasificacion === 'fraudulenta'
-          ? 'Pago registrado con hash encadenado. ⚠️ Alerta IA Keras: operación clasificada como FRAUDULENTA.'
-          : 'Pago procesado, comprobante sellado (SHA-256) y factura conciliada.',
+          ? 'Pago registrado. ⚠️ Alerta: operación marcada como sospechosa para revisión.'
+          : 'Pago procesado y factura conciliada correctamente.',
       pago,
       evaluacion_ia: evalIA,
       anomalia_ventana: anomVentana,

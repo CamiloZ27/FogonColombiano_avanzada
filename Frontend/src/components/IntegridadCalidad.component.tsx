@@ -181,20 +181,19 @@ export const IntegridadCalidad: React.FC = () => {
   return (
     <section>
       <div className="panel-heading">
-        <h1>Integridad Criptográfica &amp; Calidad de Datos</h1>
+        <h1>Integridad &amp; Calidad de Datos</h1>
         <p>
-          Verificación de <strong>hash encadenado (HMAC-SHA256)</strong> para facturas y pagos con sellado{' '}
-          <strong>SHA-256</strong> de comprobantes, más motor de validación de esquema, normalización automática y
-          detección de duplicados.
+          Verificación de integridad encadenada de facturas, pagos y comprobantes, junto con validación, normalización
+          automática y reporte de calidad de datos.
         </p>
       </div>
 
       <div className="scenarios-buttons" style={{ marginBottom: '1.5rem' }}>
         <button className={`modal-filter-btn ${tab === 'integridad' ? 'active' : ''}`} onClick={() => setTab('integridad')}>
-          🔗 Integridad Hash Encadenado
+          🔗 Integridad de Registros
         </button>
         <button className={`modal-filter-btn ${tab === 'calidad' ? 'active' : ''}`} onClick={() => setTab('calidad')}>
-          🧹 Limpieza &amp; Reporte de Calidad
+          🧹 Limpieza &amp; Calidad de Datos
         </button>
       </div>
 
@@ -309,7 +308,7 @@ export const IntegridadCalidad: React.FC = () => {
                         {b.valido ? 'ÍNTEGRO' : 'CORRUPTO'}
                       </span>
                       <div style={{ fontSize: '0.72rem', marginTop: 3 }}>
-                        Comprobante SHA-256: {b.comprobante_valido ? '✅ OK' : '❌ FALSO'}
+                        Comprobante: {b.comprobante_valido ? '✅ Verificado' : '❌ Alterado'}
                       </div>
                     </td>
                     <td>${b.monto.toLocaleString('es-CO')}</td>
@@ -331,15 +330,15 @@ export const IntegridadCalidad: React.FC = () => {
           <div className="add-order-box" style={{ marginBottom: '1.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
               <div>
-                <h2 className="add-order-title">Auditoría Automática de Calidad sobre PostgreSQL</h2>
+                <h2 className="add-order-title">Auditoría Automática de Calidad</h2>
                 <p className="add-order-subtitle">
                   Inspecciona usuarios, categorías, ítems, pedidos, facturas, pagos y transacciones en busca de
-                  duplicados, descuadres aritméticos, emails o métodos sin normalizar.
+                  duplicados, descuadres aritméticos o datos sin normalizar.
                 </p>
               </div>
               {puedeAuditarCalidad && (
                 <button className="btn btn-accent" onClick={ejecutarAuditoriaBD}>
-                  🧹 Ejecutar Auditoría en BD
+                  🧹 Ejecutar Auditoría
                 </button>
               )}
             </div>

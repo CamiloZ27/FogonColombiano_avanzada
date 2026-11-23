@@ -1,5 +1,7 @@
 import React, { FormEvent, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { PasswordInput } from './PasswordInput.component';
+import { ThemeToggle } from './ThemeToggle.component';
 
 export const LoginScreen: React.FC = () => {
   const { login, register } = useAuth();
@@ -33,14 +35,20 @@ export const LoginScreen: React.FC = () => {
     <div
       style={{
         minHeight: '100vh',
+        position: 'relative',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         padding: '2rem 1rem',
         background:
-          'radial-gradient(circle at top right, rgba(181, 101, 29, 0.22), transparent 55%), var(--bg)',
+          'radial-gradient(circle at top right, rgba(181, 101, 29, 0.2), transparent 55%), var(--bg)',
       }}
     >
+      {/* Botón animado Modo Día / Modo Noche */}
+      <div style={{ position: 'fixed', top: '1.25rem', right: '1.25rem', zIndex: 20 }}>
+        <ThemeToggle />
+      </div>
+
       <div className="trace-box" style={{ width: '100%', maxWidth: '460px', padding: '2rem 2.25rem', margin: 0 }}>
         <div style={{ marginBottom: '1.6rem', textAlign: 'center' }}>
           <div className="brand-mark" style={{ fontSize: '2.1rem' }}>
@@ -109,9 +117,8 @@ export const LoginScreen: React.FC = () => {
 
           <div className="field">
             <label htmlFor="auth-pass">Contraseña *</label>
-            <input
+            <PasswordInput
               id="auth-pass"
-              type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Mínimo 6 caracteres"

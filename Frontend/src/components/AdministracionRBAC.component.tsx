@@ -1,6 +1,7 @@
 import React, { FormEvent, useEffect, useState } from 'react';
 import { RolCodigo, useAuth } from '../context/AuthContext';
 import { apiRequest } from '../services/api.service';
+import { PasswordInput } from './PasswordInput.component';
 
 interface RolSistema {
   id: number;
@@ -227,7 +228,7 @@ export const AdministracionRBAC: React.FC = () => {
                   </div>
                   <div className="field">
                     <label>Contraseña *</label>
-                    <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} placeholder="Mínimo 6 caracteres" />
+                    <PasswordInput value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} placeholder="Mínimo 6 caracteres" />
                   </div>
                   <div className="field">
                     <label>Rol *</label>
@@ -249,7 +250,7 @@ export const AdministracionRBAC: React.FC = () => {
                   </div>
                   <div className="field">
                     <label>PIN de autorización</label>
-                    <input type="password" value={pin} onChange={(e) => setPin(e.target.value)} placeholder="4 dígitos" />
+                    <PasswordInput value={pin} onChange={(e) => setPin(e.target.value)} placeholder="4 dígitos" />
                   </div>
                 </div>
                 <div className="form-actions">

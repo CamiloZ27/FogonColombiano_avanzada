@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { ThemeProvider } from "./context/ThemeContext";
+import { ThemeToggle } from "./components/ThemeToggle.component";
 import { Cola } from "./structures/cola.structure";
 import { Pila } from "./structures/pila.structure";
 import { ConstruirGrafoCiudades } from "./datasets/datasetCiudades.data";
@@ -117,7 +119,10 @@ function AppShellAutenticada() {
       <aside className="sidebar" style={{ gap: "1.4rem" }}>
         <div className="brand">
           <span className="brand-mark">Fogón Colombiano</span>
-          <span className="brand-tag">El sabor original · Plataforma IA</span>
+          <span className="brand-tag">El sabor original</span>
+          <div style={{ marginTop: "0.45rem" }}>
+            <ThemeToggle />
+          </div>
         </div>
 
         {/* Perfil de usuario autenticado + Rol RBAC */}
@@ -229,8 +234,10 @@ function AppShellAutenticada() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AppShellAutenticada />
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <AppShellAutenticada />
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
